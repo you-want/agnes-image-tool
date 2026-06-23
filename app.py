@@ -128,61 +128,38 @@ class AgnesImageGenerator:
         negative_prompt: str = "",
         enhance_quality: bool = True,
     ) -> List[str]:
-        """图生图 - 使用 multipart/form-data 上传，参数更完整"""
+        """图生图 - 使用 base64 data URI 上传"""
         try:
+            import base64
             if enhance_quality:
                 prompt = prompt + QUALITY_PROMPT_SUFFIX
             if not negative_prompt:
                 negative_prompt = NEGATIVE_PROMPT_DEFAULT
 
-            url = f"{str(self.client.base_url).rstrip('/')}/images/generations"
-            headers = {
-                "Authorization": f"Bearer {self.client.api_key}",
-            }
-
             with open(image_path, "rb") as f:
                 image_data = f.read()
+            b64 = base64.b64encode(image_data).decode("utf-8")
+            image_url = f"data:image/png;base64,{b64}"
 
-            files = {"image": ("input.png", image_data, "image/png")}
-            data = {
-                "model": IMG2IMG_MODEL,
-                "prompt": prompt,
-                "n": str(n),
-                "size": size,
-                "strength": str(strength),
-                "mode": "image-to-image",
-            }
-            if negative_prompt:
-                data["negative_prompt"] = negative_prompt
-
-            print(f"🖼️ 图生图请求: {url}")
-            print(f"🖼️ size={size}, strength={strength}, n={n}")
-            print(f"🖼️ prompt={prompt[:100]}...")
-
-            response = requests.post(
-                url,
-                headers=headers,
-                files=files,
-                data=data,
-                timeout=120
+            response = self.client.images.generate(
+                model=IMG2IMG_MODEL,
+                prompt=prompt,
+                n=n,
+                size=size,
+                extra_body={
+                    "image": [image_url],
+                    "strength": strength,
+                    "negative_prompt": negative_prompt,
+                }
             )
-            print(f"🖼️ 响应码: {response.status_code}")
-            if response.status_code != 200:
-                print(f"🖼️ 响应: {response.text[:500]}")
-            response.raise_for_status()
-            resp_data = response.json()
 
-            urls = [item["url"] for item in resp_data.get("data", [])]
+            urls = [item.url for item in response.data]
             if not urls:
-                raise gr.Error(f"API 返回中未找到图片 URL: {response.text}")
-
+                raise gr.Error("API 返回中未找到图片 URL")
             return urls
 
-        except requests.exceptions.RequestException as e:
-            error_msg = f"图生图失败: {str(e)}"
-            if hasattr(e, "response") and e.response is not None:
-                error_msg += f"\n响应: {e.response.text}"
-            raise gr.Error(error_msg)
+        except Exception as e:
+            raise gr.Error(f"图生图失败: {str(e)}")
 
     def download_image(self, url: str, prefix: str = "agnes") -> str:
         """下载图片到本地"""
@@ -380,19 +357,169 @@ def add_to_history(prompt: str, image_paths: List[str], mode: str = "text2image"
 
 # ==================== Gradio 界面 ====================
 
+CUSTOM_CSS = """
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:wght@400;500;600&display=swap');
+
+:root {
+    --bg-primary: #0A0A0F;
+    --bg-secondary: #12121A;
+    --bg-card: #1A1A24;
+    --accent: #FF6B35;
+    --accent-glow: rgba(255, 107, 53, 0.15);
+    --text-primary: #F5F5F7;
+    --text-secondary: #8A8A9A;
+    --border: #2A2A3A;
+}
+
+.gradio-container {
+    background: var(--bg-primary) !important;
+    font-family: 'DM Sans', sans-serif !important;
+}
+
+h1, h2, h3, .title {
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-weight: 700 !important;
+    color: var(--text-primary) !important;
+}
+
+.markdown-text h1 {
+    font-size: 3rem !important;
+    letter-spacing: -0.02em !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.markdown-text blockquote {
+    border-left: 3px solid var(--accent) !important;
+    background: var(--bg-secondary) !important;
+    padding: 1rem 1.5rem !important;
+    margin: 1rem 0 !important;
+    color: var(--text-secondary) !important;
+}
+
+.tabs {
+    background: var(--bg-secondary) !important;
+    border: none !important;
+}
+
+.tab-nav button {
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-secondary) !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-weight: 500 !important;
+    font-size: 1rem !important;
+    padding: 1rem 1.5rem !important;
+    transition: all 0.3s ease !important;
+}
+
+.tab-nav button.selected {
+    color: var(--accent) !important;
+    background: var(--bg-card) !important;
+    border-bottom: 2px solid var(--accent) !important;
+}
+
+.tab-nav button:hover:not(.selected) {
+    color: var(--text-primary) !important;
+    background: rgba(255, 107, 53, 0.05) !important;
+}
+
+.gr-box, .gr-panel, .gr-group {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+}
+
+.gr-input, .gr-text-input, textarea {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text-primary) !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+}
+
+.gr-input:focus, textarea:focus {
+    border-color: var(--accent) !important;
+    box-shadow: 0 0 0 3px var(--accent-glow) !important;
+}
+
+.gr-button-primary {
+    background: var(--accent) !important;
+    color: #0A0A0F !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-weight: 600 !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.gr-button-primary:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 8px 24px rgba(255, 107, 53, 0.3) !important;
+}
+
+.gr-slider input[type="range"] {
+    accent-color: var(--accent) !important;
+}
+
+.gr-dropdown {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border) !important;
+}
+
+.gr-gallery {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+}
+
+.gr-image {
+    background: var(--bg-secondary) !important;
+    border: 2px dashed var(--border) !important;
+    border-radius: 12px !important;
+}
+
+.gr-checkbox label {
+    color: var(--text-primary) !important;
+}
+
+.accordion {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border) !important;
+}
+
+footer {
+    display: none !important;
+}
+
+.status-box {
+    background: var(--bg-secondary) !important;
+    border-left: 3px solid var(--accent) !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0 8px 8px 0 !important;
+}
+"""
+
 def create_ui():
     """创建 Gradio 界面"""
 
     with gr.Blocks(
-        title="Agnes Image 生成器",
+        title="Agnes Creator Studio",
+        css=CUSTOM_CSS,
+        theme=gr.themes.Base(
+            primary_hue="orange",
+            secondary_hue="slate",
+            neutral_hue="slate",
+            font=[gr.themes.GoogleFont("Space Grotesk"), "sans-serif"],
+        ),
     ) as demo:
 
         gr.Markdown("""
-        # 🎨 Agnes Image 2.1 / Video 2.0 生成器
+        # Agnes Creator Studio
         
-        > 基于 Agnes AI 的图像与视频生成 API，支持文生图、图生图、文生视频
+        > AI 驱动的图像与视频创作工具 · 支持 4K 高清输出
         
-        📖 [图像文档](https://agnes-ai.com/doc/agnes-image-21-flash) · [视频文档](https://agnes-ai.com/doc/agnes-video-v20)
+        [图像 API](https://agnes-ai.com/doc/agnes-image-21-flash) · [视频 API](https://agnes-ai.com/doc/agnes-video-v20) · [GitHub](https://github.com/you-want/agnes-image-tool)
         """)
 
         # API 配置区域
@@ -420,9 +547,8 @@ def create_ui():
 
         # 主界面标签页
         with gr.Tabs():
-
             # ===== 文生图 =====
-            with gr.TabItem("✏️ 文生图"):
+            with gr.TabItem("Text → Image"):
                 with gr.Row():
                     with gr.Column(scale=1):
                         prompt_input = gr.Textbox(
@@ -478,7 +604,7 @@ def create_ui():
                         )
 
             # ===== 图生图 =====
-            with gr.TabItem("🖼️ 图生图"):
+            with gr.TabItem("Image → Image"):
                 with gr.Row():
                     with gr.Column(scale=1):
                         source_image = gr.Image(
@@ -558,7 +684,7 @@ def create_ui():
                         )
 
             # ===== 文生视频 =====
-            with gr.TabItem("🎬 文生视频"):
+            with gr.TabItem("Text → Video"):
                 with gr.Row():
                     with gr.Column(scale=1):
                         video_prompt = gr.Textbox(
@@ -592,7 +718,7 @@ def create_ui():
                         )
 
             # ===== 批量生成 =====
-            with gr.TabItem("📋 批量生成"):
+            with gr.TabItem("Batch"):
                 batch_prompts = gr.Textbox(
                     label="批量提示词（每行一个）",
                     placeholder="一只猫\n一只狗\n一座山",
@@ -625,7 +751,7 @@ def create_ui():
                 )
 
             # ===== 历史记录 =====
-            with gr.TabItem("📜 历史记录"):
+            with gr.TabItem("History"):
                 refresh_history_btn = gr.Button("🔄 刷新")
                 history_gallery = gr.Gallery(
                     label="历史图片",
