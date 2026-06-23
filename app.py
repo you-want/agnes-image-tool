@@ -41,8 +41,11 @@ _cached = load_config()
 DEFAULT_API_KEY = os.getenv("AGNES_API_KEY", "") or _cached.get("api_key", "")
 DEFAULT_BASE_URL = _cached.get("base_url", "https://apihub.agnes-ai.com/v1")
 DEFAULT_MODEL = _cached.get("model", "agnes-image-2.1-flash")
-IMG2IMG_MODEL = "agnes-image-2.0-flash"
-VIDEO_MODEL = "agnes-video-2.0"
+IMG2IMG_MODEL = "agnes-image-2.1-flash"
+
+QUALITY_PROMPT_SUFFIX = ", masterpiece, best quality, ultra detailed, 8k, high resolution, sharp focus, professional photography"
+NEGATIVE_PROMPT_DEFAULT = "low quality, blurry, distorted, deformed, bad anatomy, extra limbs, watermark, text, ugly"
+VIDEO_MODEL = "agnes-video-v2.0"
 
 HISTORY_FILE = Path(__file__).parent / "history.json"
 OUTPUT_DIR = Path(__file__).parent / "outputs"
@@ -120,36 +123,66 @@ class AgnesImageGenerator:
         image_path: str,
         prompt: str,
         size: str = "1024x1024",
-        n: int = 1
+        n: int = 1,
+        strength: float = 0.75,
+        negative_prompt: str = "",
+        enhance_quality: bool = True,
     ) -> List[str]:
-        """图生图 - 使用 images.generate + extra_body"""
+        """图生图 - 使用 multipart/form-data 上传，参数更完整"""
         try:
-            # 先上传图片获取 URL（Agnes img2img 需要图片 URL）
+            if enhance_quality:
+                prompt = prompt + QUALITY_PROMPT_SUFFIX
+            if not negative_prompt:
+                negative_prompt = NEGATIVE_PROMPT_DEFAULT
+
+            url = f"{str(self.client.base_url).rstrip('/')}/images/generations"
+            headers = {
+                "Authorization": f"Bearer {self.client.api_key}",
+            }
+
             with open(image_path, "rb") as f:
                 image_data = f.read()
 
-            # 通过 OpenAI files API 上传，或直接使用 base64 data URI
-            # Agnes img2img 支持 image URL 列表
-            import base64
-            b64 = base64.b64encode(image_data).decode("utf-8")
-            image_url = f"data:image/png;base64,{b64}"
+            files = {"image": ("input.png", image_data, "image/png")}
+            data = {
+                "model": IMG2IMG_MODEL,
+                "prompt": prompt,
+                "n": str(n),
+                "size": size,
+                "strength": str(strength),
+                "mode": "image-to-image",
+            }
+            if negative_prompt:
+                data["negative_prompt"] = negative_prompt
 
-            response = self.client.images.generate(
-                model=IMG2IMG_MODEL,
-                prompt=prompt,
-                n=n,
-                size=size,
-                extra_body={
-                    "tags": ["img2img"],
-                    "image": [image_url],
-                }
+            print(f"🖼️ 图生图请求: {url}")
+            print(f"🖼️ size={size}, strength={strength}, n={n}")
+            print(f"🖼️ prompt={prompt[:100]}...")
+
+            response = requests.post(
+                url,
+                headers=headers,
+                files=files,
+                data=data,
+                timeout=120
             )
+            print(f"🖼️ 响应码: {response.status_code}")
+            if response.status_code != 200:
+                print(f"🖼️ 响应: {response.text[:500]}")
+            response.raise_for_status()
+            resp_data = response.json()
 
-            urls = [item.url for item in response.data]
+            urls = [item["url"] for item in resp_data.get("data", [])]
+            if not urls:
+                raise gr.Error(f"API 返回中未找到图片 URL: {response.text}")
+
             return urls
 
-        except Exception as e:
-            raise gr.Error(f"生成失败: {str(e)}")
+        except requests.exceptions.RequestException as e:
+            error_msg = f"图生图失败: {str(e)}"
+            if hasattr(e, "response") and e.response is not None:
+                error_msg += f"\n响应: {e.response.text}"
+            raise gr.Error(error_msg)
 
     def download_image(self, url: str, prefix: str = "agnes") -> str:
         """下载图片到本地"""
@@ -189,7 +222,7 @@ class AgnesImageGenerator:
             print(f"🎬 提交视频请求: {url}")
             print(f"🎬 payload: {json.dumps(payload, ensure_ascii=False)}")
 
-            resp = requests.post(url, json=payload, headers=headers, timeout=30)
+            resp = requests.post(url, json=payload, headers=headers, timeout=120)
             print(f"🎬 提交响应码: {resp.status_code}")
             print(f"🎬 提交响应: {resp.text}")
             resp.raise_for_status()
@@ -455,27 +488,56 @@ def create_ui():
                         )
                         img2img_prompt = gr.Textbox(
                             label="修改描述",
-                            placeholder="描述你想要如何修改这张图片，例如：转成赛博朋克风格",
+                            placeholder="描述你想要如何修改这张图片，例如：转成赛博朋克风格，雨夜霓虹",
                             lines=3
                         )
-                        img2img_size = gr.Dropdown(
-                            label="输出尺寸",
-                            choices=[
-                                "1024x1024 (1:1 正方形)",
-                                "1024x1792 (9:16 抖音竖屏)",
-                                "1792x1024 (16:9 抖音横屏)",
-                                "864x1536 (9:16 抖音封面)",
-                                "1536x864 (16:9 抖音封面)",
-                            ],
-                            value="1024x1024 (1:1 正方形)"
+                        img2img_negative = gr.Textbox(
+                            label="负面提示词（不想出现的内容）",
+                            value="low quality, blurry, distorted, deformed, watermark, text, ugly",
+                            lines=2
                         )
-                        img2img_num = gr.Slider(
-                            label="生成数量",
-                            minimum=1,
-                            maximum=4,
-                            value=1,
-                            step=1
-                        )
+                        with gr.Row():
+                            img2img_mode = gr.Dropdown(
+                                label="模式",
+                                choices=[
+                                    "风格转换",
+                                    "细节增强",
+                                    "创意重绘",
+                                    "保持构图",
+                                ],
+                                value="风格转换"
+                            )
+                            img2img_size = gr.Dropdown(
+                                label="输出尺寸",
+                                choices=[
+                                    "1024x1024 (1:1)",
+                                    "1024x1792 (9:16 竖屏)",
+                                    "1792x1024 (16:9 横屏)",
+                                    "864x1536 (9:16 封面)",
+                                    "1536x864 (16:9 封面)",
+                                ],
+                                value="1024x1024 (1:1)"
+                            )
+                        with gr.Row():
+                            img2img_strength = gr.Slider(
+                                label="创意强度（越低越像原图）",
+                                minimum=0.1,
+                                maximum=1.0,
+                                value=0.7,
+                                step=0.05
+                            )
+                        with gr.Row():
+                            img2img_num = gr.Slider(
+                                label="生成数量",
+                                minimum=1,
+                                maximum=4,
+                                value=1,
+                                step=1
+                            )
+                            img2img_quality = gr.Checkbox(
+                                label="自动增强画质",
+                                value=True
+                            )
                         img2img_btn = gr.Button(
                             "🚀 生成变体",
                             variant="primary",
@@ -617,7 +679,7 @@ def create_ui():
 
         def generate_image2image(
             api_key, base_url, model,
-            image_path, prompt, size, n
+            image_path, prompt, negative, mode, size, strength, n, quality
         ):
             """图生图处理"""
             if not api_key:
@@ -627,14 +689,25 @@ def create_ui():
             if not prompt.strip():
                 return [], "❌ 请输入修改描述"
 
+            mode_prompts = {
+                "风格转换": "",
+                "细节增强": "enhance details, sharpen, improve quality, add fine textures, ",
+                "创意重绘": "creative reinterpretation, artistic, ",
+                "保持构图": "preserve composition and subject, same layout, ",
+            }
+            enhanced_prompt = mode_prompts.get(mode, "") + prompt
+
             try:
                 gen = AgnesImageGenerator(api_key, base_url)
 
                 urls = gen.image_to_image(
                     image_path=image_path,
-                    prompt=prompt,
+                    prompt=enhanced_prompt,
                     size=parse_size(size),
-                    n=int(n)
+                    n=int(n),
+                    strength=float(strength),
+                    negative_prompt=negative,
+                    enhance_quality=quality,
                 )
 
                 local_paths = []
@@ -734,7 +807,9 @@ def create_ui():
             fn=generate_image2image,
             inputs=[
                 api_key_input, base_url_input, model_input,
-                source_image, img2img_prompt, img2img_size, img2img_num
+                source_image, img2img_prompt, img2img_negative,
+                img2img_mode, img2img_size, img2img_strength,
+                img2img_num, img2img_quality
             ],
             outputs=[img2img_output, img2img_info]
         )
