@@ -168,13 +168,12 @@ class AgnesImageGenerator:
     def text_to_video(
         self,
         prompt: str,
-        width: int = 1280,
-        height: int = 720,
         duration: int = 5,
+        image_url: str = None,
     ) -> str:
-        """文生视频 - 提交任务并轮询结果"""
+        """文生视频 - 提交任务并轮询结果，参考 Agnes 官方 API 格式"""
         try:
-            url = f"{str(self.client.base_url).rstrip('/')}/videos/generations"
+            url = f"{str(self.client.base_url).rstrip('/')}/videos"
             headers = {
                 "Authorization": f"Bearer {self.client.api_key}",
                 "Content-Type": "application/json"
@@ -182,54 +181,66 @@ class AgnesImageGenerator:
             payload = {
                 "model": VIDEO_MODEL,
                 "prompt": prompt,
-                "width": width,
-                "height": height,
                 "duration": duration,
             }
+            if image_url:
+                payload["image"] = image_url
 
             print(f"🎬 提交视频请求: {url}")
             print(f"🎬 payload: {json.dumps(payload, ensure_ascii=False)}")
 
-            response = requests.post(url, json=payload, headers=headers, timeout=60)
-            print(f"🎬 提交响应码: {response.status_code}")
-            print(f"🎬 提交响应: {response.text}")
-            response.raise_for_status()
-            data = response.json()
+            resp = requests.post(url, json=payload, headers=headers, timeout=30)
+            print(f"🎬 提交响应码: {resp.status_code}")
+            print(f"🎬 提交响应: {resp.text}")
+            resp.raise_for_status()
+            data = resp.json()
 
-            # ---- 情况 1：响应中直接含视频 URL ----
-            video_url = self._extract_video_url(data)
-            if video_url:
-                return video_url
-
-            # ---- 情况 2：返回任务 ID，需要轮询 ----
-            task_id = self._extract_task_id(data)
+            task_id = data.get("id")
             if not task_id:
-                raise gr.Error("API 返回中未找到视频 URL 或任务 ID")
+                raise gr.Error(f"API 返回中未找到任务 ID: {resp.text}")
 
-            print(f"⏳ 开始轮询任务 {task_id} ...")
+            print(f"⏳ 任务已创建: {task_id}，开始轮询...")
+
             max_wait = 600
-            poll_interval = 3
+            poll_interval = 5
             waited = 0
+            retry_count = 0
 
             while waited < max_wait:
-                poll_url = f"{str(self.client.base_url).rstrip('/')}/videos/generations/{task_id}"
-                resp = requests.get(poll_url, headers=headers, timeout=30)
-                if resp.status_code == 200:
-                    result = resp.json()
-                    video_url = self._extract_video_url(result)
-                    if video_url:
-                        print(f"✅ 视频生成完成: {video_url}")
-                        return video_url
-                    status = self._extract_task_status(result)
-                    if status in ("failed", "error", "cancelled"):
-                        raise gr.Error(f"视频生成失败: {json.dumps(result, ensure_ascii=False)}")
-                else:
-                    print(f"⚠️ 轮询状态码 {resp.status_code}: {resp.text}")
+                try:
+                    poll_url = f"{str(self.client.base_url).rstrip('/')}/videos/{task_id}"
+                    status_resp = requests.get(poll_url, headers=headers, timeout=30)
+                    status_resp.raise_for_status()
+                    status_data = status_resp.json()
+                except Exception as poll_err:
+                    retry_count += 1
+                    if retry_count < 10:
+                        wait_time = 2 ** retry_count
+                        print(f"⚠️ 查询失败，{wait_time}秒后重试 ({retry_count}/10): {poll_err}")
+                        time.sleep(wait_time)
+                        waited += wait_time
+                        continue
+                    else:
+                        raise gr.Error(f"查询视频状态失败，已重试10次: {poll_err}")
+
+                status = status_data.get("status", "unknown")
+                progress = status_data.get("progress", 0)
+                print(f"  状态: {status} | 进度: {progress}%")
+
+                if status in ("succeeded", "completed"):
+                    video_url = status_data.get("url") or status_data.get("remixed_from_video_id")
+                    if not video_url:
+                        raise gr.Error(f"视频生成完成但未找到 URL: {json.dumps(status_data)}")
+                    print(f"✅ 视频生成完成: {video_url}")
+                    return video_url
+
+                if status in ("failed", "cancelled"):
+                    error = status_data.get("error", {})
+                    error_msg = error.get("message", str(error)) if isinstance(error, dict) else str(error)
+                    raise gr.Error(f"视频生成失败: {error_msg}")
 
                 time.sleep(poll_interval)
                 waited += poll_interval
-                if waited % 15 == 0:
-                    print(f"  已等待 {waited} 秒...")
 
             raise gr.Error("视频生成超时（超过 10 分钟未返回结果）")
 
@@ -495,18 +506,6 @@ def create_ui():
                             max_lines=8
                         )
                         with gr.Row():
-                            video_size = gr.Dropdown(
-                                label="分辨率",
-                                choices=[
-                                    "480p (854x480 横屏)",
-                                    "720p (1280x720 横屏)",
-                                    "1080p (1920x1080 横屏)",
-                                    "竖屏480p (480x854 抖音封面)",
-                                    "竖屏720p (720x1280 抖音竖屏)",
-                                    "竖屏1080p (1080x1920 抖音竖屏)",
-                                ],
-                                value="720p (1280x720 横屏)"
-                            )
                             video_duration = gr.Dropdown(
                                 label="时长（秒）",
                                 choices=[3, 5, 8, 10, 15],
@@ -652,7 +651,7 @@ def create_ui():
 
         def generate_text2video(
             api_key, base_url, model,
-            prompt, size, duration
+            prompt, duration
         ):
             """文生视频处理"""
             if not api_key:
@@ -662,11 +661,8 @@ def create_ui():
 
             try:
                 gen = AgnesImageGenerator(api_key, base_url)
-                dim = parse_video_size(size)
                 video_url = gen.text_to_video(
                     prompt=prompt,
-                    width=dim["width"],
-                    height=dim["height"],
                     duration=int(duration),
                 )
 
@@ -747,7 +743,7 @@ def create_ui():
             fn=generate_text2video,
             inputs=[
                 api_key_input, base_url_input, model_input,
-                video_prompt, video_size, video_duration
+                video_prompt, video_duration
             ],
             outputs=[video_output, video_info]
         )
