@@ -83,7 +83,7 @@ class AgnesImageGenerator:
                 full_prompt += f" | 避免: {negative_prompt}"
 
             # 直接使用 requests 调用，避免 OpenAI SDK 的 URL 拼接问题
-            url = f"{self.client.base_url}/images/generations"
+            url = f"{self.client.base_url.rstrip('/')}/images/generations"
             headers = {
                 "Authorization": f"Bearer {self.client.api_key}",
                 "Content-Type": "application/json"
@@ -174,7 +174,7 @@ class AgnesImageGenerator:
     ) -> str:
         """文生视频 - 提交任务并轮询结果"""
         try:
-            url = f"{self.client.base_url}/videos/generations"
+            url = f"{self.client.base_url.rstrip('/')}/videos/generations"
             headers = {
                 "Authorization": f"Bearer {self.client.api_key}",
                 "Content-Type": "application/json"
@@ -212,7 +212,7 @@ class AgnesImageGenerator:
             waited = 0
 
             while waited < max_wait:
-                poll_url = f"{self.client.base_url}/videos/generations/{task_id}"
+                poll_url = f"{self.client.base_url.rstrip('/')}/videos/generations/{task_id}"
                 resp = requests.get(poll_url, headers=headers, timeout=30)
                 if resp.status_code == 200:
                     result = resp.json()
