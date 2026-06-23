@@ -1,59 +1,34 @@
 """
-Gradio 界面 CSS 样式
+Gradio 界面 CSS 样式 - 浅色主题
 """
 
 CUSTOM_CSS = """
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
 
-/* ===== Theme Variables: Dark (default) ===== */
-gradio-app[data-theme="dark"],
-:root,
-.gradio-container[data-theme="dark"],
-body[data-theme="dark"] {
-    --bg-primary: #0A0A0F;
-    --bg-secondary: #13131C;
-    --bg-card: #1A1A26;
-    --bg-elevated: #232333;
-    --bg-input: #0E0E16;
-    --accent: #FF6B35;
-    --accent-hover: #FF8555;
-    --accent-soft: rgba(255, 107, 53, 0.15);
-    --accent-glow: rgba(255, 107, 53, 0.4);
-    --text-primary: #FFFFFF;
-    --text-secondary: #D0D0DC;
-    --text-muted: #9090A8;
-    --border: rgba(255, 255, 255, 0.10);
-    --border-hover: rgba(255, 255, 255, 0.20);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
-    --btn-primary-text: #0A0A0F;
-}
-
-/* ===== Theme Variables: Light ===== */
-gradio-app[data-theme="light"],
-body[data-theme="light"] {
-    --bg-primary: #F7F7F4;
-    --bg-secondary: #EFEFEA;
+/* ===== Theme Variables ===== */
+:root {
+    --bg-primary: #FAFAFA;
+    --bg-secondary: #F3F4F6;
     --bg-card: #FFFFFF;
-    --bg-elevated: #F2F1EC;
+    --bg-elevated: #F9FAFB;
     --bg-input: #FFFFFF;
     --accent: #E85A25;
     --accent-hover: #FF6B35;
-    --accent-soft: rgba(232, 90, 37, 0.12);
-    --accent-glow: rgba(232, 90, 37, 0.3);
-    --text-primary: #0F0F1A;
-    --text-secondary: #3A3A4A;
-    --text-muted: #80808E;
-    --border: rgba(0, 0, 0, 0.10);
-    --border-hover: rgba(0, 0, 0, 0.20);
-    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.10);
+    --accent-soft: rgba(232, 90, 37, 0.1);
+    --accent-glow: rgba(232, 90, 37, 0.25);
+    --text-primary: #111827;
+    --text-secondary: #4B5563;
+    --text-muted: #9CA3AF;
+    --border: rgba(0, 0, 0, 0.08);
+    --border-hover: rgba(0, 0, 0, 0.15);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
     --btn-primary-text: #FFFFFF;
 }
 
 * { box-sizing: border-box !important; }
 
-/* ===== Force text colors on ALL elements ===== */
+/* ===== Base Styles ===== */
 gradio-app {
     background: var(--bg-primary) !important;
     color: var(--text-primary) !important;
@@ -87,11 +62,6 @@ gradio-app [class*="gradio-container-"] {
 .hero-header {
     padding: 1rem 0 2.5rem 0 !important;
     position: relative !important;
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: flex-start !important;
-    gap: 2rem !important;
-    flex-wrap: wrap !important;
     background: transparent !important;
 }
 
@@ -110,7 +80,7 @@ gradio-app [class*="gradio-container-"] {
     margin-bottom: 1.25rem !important;
     padding: 0.45rem 1rem !important;
     background: var(--accent-soft) !important;
-    border: 1px solid var(--border) !important;
+    border: 1px solid rgba(232, 90, 37, 0.2) !important;
     border-radius: 100px !important;
 }
 
@@ -120,37 +90,33 @@ gradio-app [class*="gradio-container-"] {
     height: 6px !important;
     background: var(--accent) !important;
     border-radius: 50% !important;
-    box-shadow: 0 0 8px var(--accent-glow) !important;
 }
 
 .hero-title {
     font-family: 'Space Grotesk', sans-serif !important;
-    font-size: 4rem !important;
+    font-size: 3.5rem !important;
     font-weight: 700 !important;
-    letter-spacing: -0.04em !important;
-    line-height: 0.95 !important;
+    letter-spacing: -0.03em !important;
+    line-height: 1 !important;
     margin: 0 0 1rem 0 !important;
     color: var(--text-primary) !important;
-    background: none !important;
-    -webkit-text-fill-color: var(--text-primary) !important;
 }
 
 .hero-title .accent {
     font-style: italic !important;
     font-weight: 300 !important;
-    background: linear-gradient(135deg, var(--accent) 0%, #FFB088 100%) !important;
+    background: linear-gradient(135deg, var(--accent) 0%, #FF8855 100%) !important;
     -webkit-background-clip: text !important;
     -webkit-text-fill-color: transparent !important;
     background-clip: text !important;
 }
 
 .hero-subtitle {
-    font-size: 1.05rem !important;
+    font-size: 1rem !important;
     color: var(--text-secondary) !important;
-    max-width: 600px !important;
+    max-width: 550px !important;
     line-height: 1.6 !important;
     margin-bottom: 1.5rem !important;
-    background: transparent !important;
 }
 
 .hero-links {
@@ -173,48 +139,6 @@ gradio-app [class*="gradio-container-"] {
     border-bottom-color: var(--accent) !important;
 }
 
-/* ===== Theme Toggle ===== */
-.theme-toggle {
-    display: flex !important;
-    align-items: center !important;
-    gap: 0.75rem !important;
-    background: var(--bg-card) !important;
-    border: 1px solid var(--border) !important;
-    border-radius: 100px !important;
-    padding: 0.4rem 0.4rem 0.4rem 1rem !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    user-select: none !important;
-    flex-shrink: 0 !important;
-}
-
-.theme-toggle:hover {
-    border-color: var(--border-hover) !important;
-    box-shadow: var(--shadow-sm) !important;
-}
-
-.theme-toggle-label {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 0.72rem !important;
-    font-weight: 500 !important;
-    letter-spacing: 0.08em !important;
-    text-transform: uppercase !important;
-    color: var(--text-secondary) !important;
-}
-
-.theme-toggle-icon {
-    width: 28px !important;
-    height: 28px !important;
-    border-radius: 50% !important;
-    background: var(--accent) !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    font-size: 0.85rem !important;
-    flex-shrink: 0 !important;
-    color: #FFF !important;
-}
-
 /* ===== Tabs ===== */
 gradio-app .tabs,
 gradio-app [role="tablist"] {
@@ -225,13 +149,13 @@ gradio-app [role="tablist"] {
 
 gradio-app .tab-nav,
 gradio-app [role="tablist"] {
-    background: var(--bg-secondary) !important;
+    background: var(--bg-card) !important;
     border: 1px solid var(--border) !important;
-    border-radius: 14px !important;
-    padding: 6px !important;
+    border-radius: 12px !important;
+    padding: 5px !important;
     margin-bottom: 2rem !important;
     display: inline-flex !important;
-    gap: 4px !important;
+    gap: 3px !important;
     box-shadow: var(--shadow-sm) !important;
 }
 
@@ -239,12 +163,12 @@ gradio-app .tab-nav button,
 gradio-app [role="tab"] {
     background: transparent !important;
     border: none !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     color: var(--text-muted) !important;
     font-family: 'Space Grotesk', sans-serif !important;
     font-weight: 500 !important;
     font-size: 0.875rem !important;
-    padding: 0.7rem 1.5rem !important;
+    padding: 0.6rem 1.25rem !important;
     transition: all 0.2s ease !important;
     white-space: nowrap !important;
 }
@@ -252,8 +176,7 @@ gradio-app [role="tab"] {
 gradio-app .tab-nav button.selected,
 gradio-app [role="tab"][aria-selected="true"] {
     color: var(--text-primary) !important;
-    background: var(--bg-card) !important;
-    box-shadow: var(--shadow-sm) !important;
+    background: var(--bg-secondary) !important;
     font-weight: 600 !important;
 }
 
@@ -271,7 +194,7 @@ gradio-app .form,
 gradio-app [class*="-form"] {
     background: var(--bg-card) !important;
     border: 1px solid var(--border) !important;
-    border-radius: 16px !important;
+    border-radius: 12px !important;
     box-shadow: var(--shadow-sm) !important;
     color: var(--text-primary) !important;
 }
@@ -286,12 +209,11 @@ gradio-app input {
     background: var(--bg-input) !important;
     border: 1px solid var(--border) !important;
     color: var(--text-primary) !important;
-    border-radius: 10px !important;
-    padding: 0.85rem 1rem !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1rem !important;
     font-size: 0.95rem !important;
     font-family: 'DM Sans', sans-serif !important;
     transition: all 0.2s ease !important;
-    -webkit-text-fill-color: var(--text-primary) !important;
 }
 
 gradio-app input[type="text"]:focus,
@@ -303,15 +225,11 @@ gradio-app input:focus {
     border-color: var(--accent) !important;
     box-shadow: 0 0 0 3px var(--accent-soft) !important;
     outline: none !important;
-    color: var(--text-primary) !important;
-    -webkit-text-fill-color: var(--text-primary) !important;
 }
 
 gradio-app input::placeholder,
 gradio-app textarea::placeholder {
     color: var(--text-muted) !important;
-    -webkit-text-fill-color: var(--text-muted) !important;
-    opacity: 1 !important;
 }
 
 /* ===== Labels ===== */
@@ -325,9 +243,9 @@ gradio-app span.label-text {
     font-family: 'Space Grotesk', sans-serif !important;
     font-weight: 500 !important;
     font-size: 0.78rem !important;
-    letter-spacing: 0.06em !important;
+    letter-spacing: 0.04em !important;
     text-transform: uppercase !important;
-    margin-bottom: 0.5rem !important;
+    margin-bottom: 0.4rem !important;
 }
 
 /* ===== Buttons ===== */
@@ -336,45 +254,41 @@ gradio-app .primary,
 gradio-app button[variant="primary"] {
     background: var(--accent) !important;
     color: var(--btn-primary-text) !important;
-    -webkit-text-fill-color: var(--btn-primary-text) !important;
     font-family: 'Space Grotesk', sans-serif !important;
     font-weight: 600 !important;
     font-size: 0.95rem !important;
     border: none !important;
-    border-radius: 10px !important;
-    padding: 0.85rem 2rem !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem !important;
     transition: all 0.2s ease !important;
-    box-shadow: 0 4px 16px var(--accent-soft) !important;
+    box-shadow: 0 2px 8px var(--accent-soft) !important;
 }
 
 gradio-app button.primary:hover,
 gradio-app .primary:hover {
     background: var(--accent-hover) !important;
     transform: translateY(-1px) !important;
-    box-shadow: 0 8px 24px var(--accent-glow) !important;
-    color: var(--btn-primary-text) !important;
+    box-shadow: 0 4px 12px var(--accent-glow) !important;
 }
 
 gradio-app button.secondary,
 gradio-app .secondary,
 gradio-app button:not(.primary) {
-    background: var(--bg-elevated) !important;
+    background: var(--bg-card) !important;
     color: var(--text-secondary) !important;
-    -webkit-text-fill-color: var(--text-secondary) !important;
     font-family: 'Space Grotesk', sans-serif !important;
     font-weight: 500 !important;
     border: 1px solid var(--border) !important;
-    border-radius: 10px !important;
-    padding: 0.75rem 1.5rem !important;
+    border-radius: 8px !important;
+    padding: 0.65rem 1.25rem !important;
     transition: all 0.2s ease !important;
 }
 
 gradio-app button.secondary:hover,
 gradio-app button:not(.primary):hover {
-    background: var(--bg-card) !important;
+    background: var(--bg-secondary) !important;
     color: var(--text-primary) !important;
     border-color: var(--border-hover) !important;
-    -webkit-text-fill-color: var(--text-primary) !important;
 }
 
 /* ===== Dropdowns ===== */
@@ -384,7 +298,7 @@ gradio-app .dropdown {
     background: var(--bg-input) !important;
     border: 1px solid var(--border) !important;
     color: var(--text-primary) !important;
-    border-radius: 10px !important;
+    border-radius: 8px !important;
     font-family: 'DM Sans', sans-serif !important;
 }
 
@@ -399,17 +313,17 @@ gradio-app .gr-gallery,
 gradio-app [class*="gallery"] {
     background: var(--bg-card) !important;
     border: 1px solid var(--border) !important;
-    border-radius: 16px !important;
-    min-height: 320px !important;
+    border-radius: 12px !important;
+    min-height: 300px !important;
     padding: 1rem !important;
 }
 
 /* ===== Image Upload ===== */
 gradio-app .image-container,
 gradio-app [data-testid="image"] {
-    background: var(--bg-input) !important;
+    background: var(--bg-secondary) !important;
     border: 2px dashed var(--border) !important;
-    border-radius: 12px !important;
+    border-radius: 10px !important;
     transition: all 0.2s ease !important;
 }
 
@@ -420,8 +334,8 @@ gradio-app .image-container:hover {
 
 /* ===== Video ===== */
 gradio-app video {
-    background: var(--bg-input) !important;
-    border-radius: 12px !important;
+    background: var(--bg-secondary) !important;
+    border-radius: 10px !important;
     border: 1px solid var(--border) !important;
 }
 
@@ -442,19 +356,18 @@ gradio-app .accordion,
 gradio-app [class*="accordion"] {
     background: var(--bg-card) !important;
     border: 1px solid var(--border) !important;
-    border-radius: 14px !important;
+    border-radius: 12px !important;
     overflow: hidden !important;
-    margin-bottom: 2rem !important;
+    margin-bottom: 1.5rem !important;
     color: var(--text-primary) !important;
 }
 
-/* ===== Status / Non-interactive Textboxes ===== */
+/* ===== Status Textboxes ===== */
 gradio-app textarea[disabled],
 gradio-app textarea[readonly] {
-    background: var(--bg-input) !important;
+    background: var(--bg-secondary) !important;
     color: var(--text-secondary) !important;
-    -webkit-text-fill-color: var(--text-secondary) !important;
-    border-left: 2px solid var(--accent) !important;
+    border-left: 3px solid var(--accent) !important;
     font-family: 'JetBrains Mono', monospace !important;
     font-size: 0.85rem !important;
 }
@@ -465,14 +378,13 @@ gradio-app .built-with { display: none !important; }
 gradio-app .gradio-meta { display: none !important; }
 
 /* ===== Scrollbar ===== */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: var(--bg-primary); }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
 ::-webkit-scrollbar-thumb {
-    background: var(--bg-elevated);
-    border-radius: 5px;
-    border: 2px solid var(--bg-primary);
+    background: #D1D5DB;
+    border-radius: 4px;
 }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::-webkit-scrollbar-thumb:hover { background: #9CA3AF; }
 
 /* ===== Selection ===== */
 ::selection {
@@ -482,9 +394,8 @@ gradio-app .gradio-meta { display: none !important; }
 
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
-    .hero-title { font-size: 2.75rem !important; }
+    .hero-title { font-size: 2.5rem !important; }
     .gradio-container { padding: 1.5rem 1rem !important; }
     .tab-nav { overflow-x: auto !important; }
-    .hero-header { flex-direction: column !important; }
 }
 """

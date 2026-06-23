@@ -23,45 +23,6 @@ from utils import (
 from styles import CUSTOM_CSS
 
 
-# ==================== 主题切换 JS ====================
-THEME_JS = """
-() => {
-    const saved = localStorage.getItem('agnes-theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', saved);
-    if (document.body) document.body.setAttribute('data-theme', saved);
-    return saved;
-}
-
-window.toggleTheme = function() {
-    const current = document.body.getAttribute('data-theme') || 'dark';
-    const next = current === 'dark' ? 'light' : 'dark';
-    document.body.setAttribute('data-theme', next);
-    document.documentElement.setAttribute('data-theme', next);
-    localStorage.setItem('agnes-theme', next);
-    updateThemeIcon(next);
-}
-
-window.updateThemeIcon = function(theme) {
-    const label = document.getElementById('themeLabel');
-    const icon = document.getElementById('themeIcon');
-    if (label) label.textContent = theme.toUpperCase();
-    if (icon) icon.textContent = theme === 'dark' ? '◑' : '◐';
-}
-
-const bindToggle = () => {
-    const toggle = document.getElementById('themeToggle');
-    if (toggle && !toggle.dataset.bound) {
-        toggle.addEventListener('click', window.toggleTheme);
-        toggle.dataset.bound = 'true';
-        const current = document.body.getAttribute('data-theme') || 'dark';
-        updateThemeIcon(current);
-    }
-};
-bindToggle();
-setInterval(bindToggle, 500);
-"""
-
-
 # ==================== 创建界面 ====================
 def create_ui():
     with gr.Blocks(title="Agnes Creator Studio") as demo:
@@ -78,10 +39,6 @@ def create_ui():
                     <a href="https://agnes-ai.com/doc/agnes-video-v20" target="_blank">视频 API ↗</a>
                     <a href="https://github.com/you-want/agnes-image-tool" target="_blank">GitHub ↗</a>
                 </div>
-            </div>
-            <div class="theme-toggle" id="themeToggle">
-                <span class="theme-toggle-label" id="themeLabel">DARK</span>
-                <div class="theme-toggle-icon" id="themeIcon">◐</div>
             </div>
         </div>
         """)
@@ -489,5 +446,4 @@ if __name__ == "__main__":
         share=False,
         show_error=True,
         css=CUSTOM_CSS,
-        js=THEME_JS,
     )
