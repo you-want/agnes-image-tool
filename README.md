@@ -1,5 +1,5 @@
 ---
-title: Agnes Image Generator
+title: Agnes Image & Video Generator
 emoji: 🎨
 colorFrom: blue
 colorTo: purple
@@ -8,15 +8,15 @@ sdk_version: 5.0.0
 app_file: app.py
 pinned: false
 license: mit
-short_description: Agnes Image 2.1 Flash 图像生成工具
+short_description: Agnes Image 2.1 / Video 2.0 生成工具
 ---
 
-# 🎨 Agnes Image 2.1 Flash 生成器
+# 🎨 Agnes Image 2.1 / Video 2.0 生成器
 
-基于 Agnes AI API 的图像生成工具，支持文生图、图生图、批量生成。
+基于 Agnes AI API 的图像与视频生成工具，支持文生图、图生图、文生视频、批量生成。
 
 ## 使用方法
 
 1. 在界面中输入你的 Agnes API Key（从 [agnes-ai.com](https://agnes-ai.com) 获取）
-2. 输入提示词生成图片
-3. 支持多种尺寸，包括抖音适配尺寸
+2. 选择功能：文生图、图生图、文生视频，或批量生成
+3. 支持多种尺寸，包括抖音适配的横屏/竖屏格式

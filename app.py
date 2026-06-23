@@ -7,6 +7,7 @@ Agnes Image 2.1 Flash - 可视化图像生成工具
 import os
 import json
 import base64
+import time
 import requests
 from datetime import datetime
 from pathlib import Path
@@ -41,6 +42,7 @@ DEFAULT_API_KEY = os.getenv("AGNES_API_KEY", "") or _cached.get("api_key", "")
 DEFAULT_BASE_URL = _cached.get("base_url", "https://apihub.agnes-ai.com/v1")
 DEFAULT_MODEL = _cached.get("model", "agnes-image-2.1-flash")
 IMG2IMG_MODEL = "agnes-image-2.0-flash"
+VIDEO_MODEL = "agnes-video-2.0"
 
 HISTORY_FILE = Path(__file__).parent / "history.json"
 OUTPUT_DIR = Path(__file__).parent / "outputs"
@@ -49,6 +51,15 @@ OUTPUT_DIR.mkdir(exist_ok=True)
 def parse_size(size_str: str) -> str:
     """从选项中提取实际尺寸，如 '1024x1024 (1:1 正方形)' -> '1024x1024'"""
     return size_str.split(" ")[0]
+
+def parse_video_size(size_str: str) -> dict:
+    """从选项中提取视频尺寸，如 '720p (1280x720 横屏)' -> {'width':1280, 'height':720}"""
+    try:
+        inner = size_str.split("(")[1].split(")")[0].strip()
+        w, h = inner.split("x")
+        return {"width": int(w.strip()), "height": int(h.strip())}
+    except Exception:
+        return {"width": 1280, "height": 720}
 
 # ==================== 核心功能 ====================
 
@@ -154,6 +165,144 @@ class AgnesImageGenerator:
 
         return str(filepath)
 
+    def text_to_video(
+        self,
+        prompt: str,
+        width: int = 1280,
+        height: int = 720,
+        duration: int = 5,
+    ) -> str:
+        """文生视频 - 提交任务并轮询结果"""
+        try:
+            url = f"{self.client.base_url}/videos/generations"
+            headers = {
+                "Authorization": f"Bearer {self.client.api_key}",
+                "Content-Type": "application/json"
+            }
+            payload = {
+                "model": VIDEO_MODEL,
+                "prompt": prompt,
+                "width": width,
+                "height": height,
+                "duration": duration,
+            }
+
+            print(f"🎬 提交视频请求: {url}")
+            print(f"🎬 payload: {json.dumps(payload, ensure_ascii=False)}")
+
+            response = requests.post(url, json=payload, headers=headers, timeout=60)
+            print(f"🎬 提交响应码: {response.status_code}")
+            print(f"🎬 提交响应: {response.text}")
+            response.raise_for_status()
+            data = response.json()
+
+            # ---- 情况 1：响应中直接含视频 URL ----
+            video_url = self._extract_video_url(data)
+            if video_url:
+                return video_url
+
+            # ---- 情况 2：返回任务 ID，需要轮询 ----
+            task_id = self._extract_task_id(data)
+            if not task_id:
+                raise gr.Error("API 返回中未找到视频 URL 或任务 ID")
+
+            print(f"⏳ 开始轮询任务 {task_id} ...")
+            max_wait = 600
+            poll_interval = 3
+            waited = 0
+
+            while waited < max_wait:
+                poll_url = f"{self.client.base_url}/videos/generations/{task_id}"
+                resp = requests.get(poll_url, headers=headers, timeout=30)
+                if resp.status_code == 200:
+                    result = resp.json()
+                    video_url = self._extract_video_url(result)
+                    if video_url:
+                        print(f"✅ 视频生成完成: {video_url}")
+                        return video_url
+                    status = self._extract_task_status(result)
+                    if status in ("failed", "error", "cancelled"):
+                        raise gr.Error(f"视频生成失败: {json.dumps(result, ensure_ascii=False)}")
+                else:
+                    print(f"⚠️ 轮询状态码 {resp.status_code}: {resp.text}")
+
+                time.sleep(poll_interval)
+                waited += poll_interval
+                if waited % 15 == 0:
+                    print(f"  已等待 {waited} 秒...")
+
+            raise gr.Error("视频生成超时（超过 10 分钟未返回结果）")
+
+        except requests.exceptions.RequestException as e:
+            error_msg = f"视频生成失败: {str(e)}"
+            if hasattr(e, "response") and e.response is not None:
+                error_msg += f"\n响应: {e.response.text}"
+            raise gr.Error(error_msg)
+
+    def download_video(self, url: str, prefix: str = "agnes_video") -> str:
+        """下载视频到本地"""
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
+        filename = f"{prefix}_{timestamp}.mp4"
+        filepath = OUTPUT_DIR / filename
+
+        print(f"⬇️ 下载视频: {url}")
+        response = requests.get(url, timeout=300, stream=True)
+        response.raise_for_status()
+
+        with open(filepath, "wb") as f:
+            for chunk in response.iter_content(chunk_size=1024 * 1024):
+                if chunk:
+                    f.write(chunk)
+
+        print(f"✅ 已保存到: {filepath}")
+        return str(filepath)
+
+    @staticmethod
+    def _extract_video_url(data: dict) -> Optional[str]:
+        """从 API 响应中抽取视频 URL（兼容多种结构）"""
+        # OpenAI 风格: {"data": [{"url": "..."}]}
+        data_list = data.get("data") or data.get("result") or data.get("output")
+        if isinstance(data_list, list):
+            for item in data_list:
+                if isinstance(item, str) and item.startswith(("http://", "https://")) and item.endswith((".mp4", ".webm", ".mov")):
+                    return item
+                if isinstance(item, dict):
+                    for key in ("url", "video_url", "video", "file_url"):
+                        if item.get(key) and isinstance(item[key], str) and item[key].startswith(("http://", "https://")):
+                            return item[key]
+                    # item 可能本身就是 {"url": "..."}
+                    if "url" in item:
+                        return item["url"]
+        if isinstance(data_list, str) and data_list.startswith(("http://", "https://")):
+            return data_list
+
+        # 直接顶层字段
+        for key in ("url", "video_url", "video", "file_url"):
+            if data.get(key) and isinstance(data[key], str) and data[key].startswith(("http://", "https://")):
+                return data[key]
+
+        return None
+
+    @staticmethod
+    def _extract_task_id(data: dict) -> Optional[str]:
+        """从响应中抽取任务 ID"""
+        for key in ("id", "task_id", "job_id", "request_id", "tracking_id"):
+            if data.get(key) and isinstance(data[key], str):
+                return data[key]
+            if isinstance(data.get("data"), dict) and data["data"].get(key):
+                return data["data"][key]
+        return None
+
+    @staticmethod
+    def _extract_task_status(data: dict) -> Optional[str]:
+        """从响应中抽取任务状态"""
+        for key in ("status", "state", "status_code"):
+            if data.get(key) and isinstance(data[key], str):
+                return data[key]
+            if isinstance(data.get("data"), dict) and data["data"].get(key):
+                return data["data"][key]
+        return None
+
 
 # ==================== 历史记录管理 ====================
 
@@ -195,11 +344,11 @@ def create_ui():
     ) as demo:
 
         gr.Markdown("""
-        # 🎨 Agnes Image 2.1 Flash 生成器
+        # 🎨 Agnes Image 2.1 / Video 2.0 生成器
         
-        > 基于 Agnes AI 的免费图像生成 API，支持文生图、图生图
+        > 基于 Agnes AI 的图像与视频生成 API，支持文生图、图生图、文生视频
         
-        📖 [官方文档](https://agnes-ai.com/doc/agnes-image-21-flash)
+        📖 [图像文档](https://agnes-ai.com/doc/agnes-image-21-flash) · [视频文档](https://agnes-ai.com/doc/agnes-video-v20)
         """)
 
         # API 配置区域
@@ -335,6 +484,52 @@ def create_ui():
                             value="等待生成..."
                         )
 
+            # ===== 文生视频 =====
+            with gr.TabItem("🎬 文生视频"):
+                with gr.Row():
+                    with gr.Column(scale=1):
+                        video_prompt = gr.Textbox(
+                            label="视频描述",
+                            placeholder="描述你想生成的视频，例如：夕阳下的海浪拍打礁石，镜头缓慢推近",
+                            lines=4,
+                            max_lines=8
+                        )
+                        with gr.Row():
+                            video_size = gr.Dropdown(
+                                label="分辨率",
+                                choices=[
+                                    "480p (854x480 横屏)",
+                                    "720p (1280x720 横屏)",
+                                    "1080p (1920x1080 横屏)",
+                                    "竖屏480p (480x854 抖音封面)",
+                                    "竖屏720p (720x1280 抖音竖屏)",
+                                    "竖屏1080p (1080x1920 抖音竖屏)",
+                                ],
+                                value="720p (1280x720 横屏)"
+                            )
+                            video_duration = gr.Dropdown(
+                                label="时长（秒）",
+                                choices=[3, 5, 8, 10, 15],
+                                value=5,
+                            )
+                        video_btn = gr.Button(
+                            "🚀 生成视频",
+                            variant="primary",
+                            size="lg"
+                        )
+
+                    with gr.Column(scale=1):
+                        video_output = gr.Video(
+                            label="生成的视频",
+                            height=400,
+                            autoplay=False
+                        )
+                        video_info = gr.Textbox(
+                            label="状态",
+                            interactive=False,
+                            value="等待生成..."
+                        )
+
             # ===== 批量生成 =====
             with gr.TabItem("📋 批量生成"):
                 batch_prompts = gr.Textbox(
@@ -455,6 +650,37 @@ def create_ui():
             except Exception as e:
                 return [], f"❌ 错误: {str(e)}"
 
+        def generate_text2video(
+            api_key, base_url, model,
+            prompt, size, duration
+        ):
+            """文生视频处理"""
+            if not api_key:
+                return None, "❌ 请先配置 API Key"
+            if not prompt.strip():
+                return None, "❌ 请输入视频描述"
+
+            try:
+                gen = AgnesImageGenerator(api_key, base_url)
+                dim = parse_video_size(size)
+                video_url = gen.text_to_video(
+                    prompt=prompt,
+                    width=dim["width"],
+                    height=dim["height"],
+                    duration=int(duration),
+                )
+
+                # 下载视频到本地
+                local_path = gen.download_video(video_url)
+
+                # 保存历史
+                add_to_history(prompt, [local_path], "text2video")
+
+                return local_path, f"✅ 视频生成成功！已保存到 outputs 目录"
+
+            except Exception as e:
+                return None, f"❌ 错误: {str(e)}"
+
         def generate_batch(
             api_key, base_url, model,
             prompts_text, size
@@ -515,6 +741,15 @@ def create_ui():
                 source_image, img2img_prompt, img2img_size, img2img_num
             ],
             outputs=[img2img_output, img2img_info]
+        )
+
+        video_btn.click(
+            fn=generate_text2video,
+            inputs=[
+                api_key_input, base_url_input, model_input,
+                video_prompt, video_size, video_duration
+            ],
+            outputs=[video_output, video_info]
         )
 
         batch_btn.click(
