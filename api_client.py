@@ -185,7 +185,37 @@ class AgnesImageGenerator:
         aspect_ratio: str = "16:9",
         image_url: str = None,
     ) -> str:
-        """文生视频 - 提交任务并轮询结果"""
+        """文生视频 - 提交任务并轮询结果
+        
+        参数说明（根据官方文档）：
+        - duration: 视频时长（秒），会转换为 num_frames
+        - aspect_ratio: 视频比例，会转换为 width/height
+        - num_frames 必须满足 8n + 1（如 81, 121, 161, 241, 441）
+        - frame_rate 默认 24
+        """
+        # 时长到帧数的映射（frame_rate=24）
+        duration_to_frames = {
+            3: 81,    # 81/24 ≈ 3.375秒
+            5: 121,   # 121/24 ≈ 5.04秒
+            8: 201,   # 201/24 ≈ 8.375秒
+            10: 241,  # 241/24 ≈ 10.04秒
+            15: 361,  # 361/24 ≈ 15.04秒
+        }
+        
+        # 比例到宽高的映射
+        ratio_to_size = {
+            "16:9": {"width": 1152, "height": 768},
+            "9:16": {"width": 768, "height": 1152},
+            "1:1": {"width": 768, "height": 768},
+            "4:3": {"width": 1024, "height": 768},
+            "3:4": {"width": 768, "height": 1024},
+            "21:9": {"width": 1280, "height": 576},
+        }
+        
+        # 获取帧数和尺寸
+        num_frames = duration_to_frames.get(duration, 121)  # 默认 5秒
+        size = ratio_to_size.get(aspect_ratio, {"width": 1152, "height": 768})
+        
         try:
             url = f"{str(self.client.base_url).rstrip('/')}/videos"
             headers = {
@@ -195,15 +225,18 @@ class AgnesImageGenerator:
             payload = {
                 "model": VIDEO_MODEL,
                 "prompt": prompt,
-                "duration": duration,
-                "aspect_ratio": aspect_ratio,
+                "width": size["width"],
+                "height": size["height"],
+                "num_frames": num_frames,
+                "frame_rate": 24,
             }
             if image_url:
                 payload["image"] = image_url
 
             print(f"🎬 提交视频请求: {url}")
             print(f"🎬 payload: {json.dumps(payload, ensure_ascii=False)}")
-            print(f"🎬 时长: {duration}秒, 比例: {aspect_ratio}")
+            print(f"🎬 时长: {duration}秒 → num_frames={num_frames}, frame_rate=24")
+            print(f"🎬 比例: {aspect_ratio} → width={size['width']}, height={size['height']}")
 
             resp = requests.post(url, json=payload, headers=headers, timeout=120)
             print(f"🎬 提交响应码: {resp.status_code}")
@@ -211,11 +244,13 @@ class AgnesImageGenerator:
             resp.raise_for_status()
             data = resp.json()
 
-            task_id = data.get("id")
-            if not task_id:
+            # 使用 video_id 查询（推荐方式）
+            video_id = data.get("video_id") or data.get("id")
+            if not video_id:
                 raise gr.Error(f"API 返回中未找到任务 ID: {resp.text}")
 
-            print(f"⏳ 任务已创建: {task_id}，开始轮询...")
+            print(f"⏳ 任务已创建: {video_id}，开始轮询...")
+            print(f"🎬 API 返回时长: {data.get('seconds', 'N/A')}秒, 尺寸: {data.get('size', 'N/A')}")
 
             max_wait = 600
             poll_interval = 5
@@ -224,7 +259,8 @@ class AgnesImageGenerator:
 
             while waited < max_wait:
                 try:
-                    poll_url = f"{str(self.client.base_url).rstrip('/')}/videos/{task_id}"
+                    # 使用推荐的 video_id 查询方式
+                    poll_url = f"https://apihub.agnes-ai.com/agnesapi?video_id={video_id}"
                     status_resp = requests.get(poll_url, headers=headers, timeout=30)
                     status_resp.raise_for_status()
                     status_data = status_resp.json()
@@ -241,7 +277,8 @@ class AgnesImageGenerator:
 
                 status = status_data.get("status", "unknown")
                 progress = status_data.get("progress", 0)
-                print(f"  状态: {status} | 进度: {progress}%")
+                seconds = status_data.get("seconds", "N/A")
+                print(f"  状态: {status} | 进度: {progress}% | 时长: {seconds}秒")
 
                 if status in ("succeeded", "completed"):
                     video_url = status_data.get("url") or status_data.get("remixed_from_video_id")
