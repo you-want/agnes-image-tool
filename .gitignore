@@ -30,3 +30,14 @@ Thumbs.db
 
 # Env
 .env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+
+# Temp files
+tmp/
+temp/
+*.tmp
