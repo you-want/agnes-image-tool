@@ -8,6 +8,26 @@
 
 ---
 
+## 🖼️ 效果展示
+
+### 文生图 (Text-to-Image)
+
+| 提示词 | 生成效果 |
+|--------|----------|
+| `A beautiful sunset over the ocean with golden clouds, photorealistic, cinematic` | ![文生图示例1](assets/t2i_example1.png) |
+| `A cute cartoon cat wearing a hat, sitting on a windowsill, warm colors, illustration style` | ![文生图示例2](assets/t2i_example2.png) |
+| `A futuristic city skyline at night with neon lights and flying cars, cyberpunk style` | ![文生图示例3](assets/t2i_example3.png) |
+
+### 图生图 (Image-to-Image)
+
+| 风格转换 | 生成效果 |
+|----------|----------|
+| 原图 → 赛博朋克风格 | ![图生图示例1](assets/i2i_example4.png) |
+| 原图 → 水彩风格 | ![图生图示例2](assets/i2i_example5.png) |
+| 原图 → 超现实风格 | ![图生图示例3](assets/i2i_example6.png) |
+
+---
+
 ## ✨ 特性
 
 | 功能 | 描述 | 本地图片支持 |
