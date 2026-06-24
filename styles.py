@@ -392,6 +392,45 @@ gradio-app .gradio-meta { display: none !important; }
     color: var(--text-primary);
 }
 
+/* ===== Section Labels ===== */
+.section-label {
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-weight: 600 !important;
+    font-size: 0.85rem !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    color: var(--accent) !important;
+    margin: 1.5rem 0 0.75rem 0 !important;
+    padding-bottom: 0.5rem !important;
+    border-bottom: 2px solid var(--accent-soft) !important;
+}
+
+/* ===== Warning Box ===== */
+.warning-box {
+    background: rgba(255, 193, 7, 0.15) !important;
+    border: 1px solid rgba(255, 193, 7, 0.3) !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.9rem !important;
+    color: #856404 !important;
+    line-height: 1.5 !important;
+}
+
+/* ===== Success Box ===== */
+.success-box {
+    background: rgba(40, 167, 69, 0.15) !important;
+    border: 1px solid rgba(40, 167, 69, 0.3) !important;
+    border-radius: 8px !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+    font-family: 'DM Sans', sans-serif !important;
+    font-size: 0.9rem !important;
+    color: #155724 !important;
+    line-height: 1.5 !important;
+}
+
 /* ===== Responsive ===== */
 @media (max-width: 768px) {
     .hero-title { font-size: 2.5rem !important; }
