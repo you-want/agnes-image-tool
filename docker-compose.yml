@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  agnes-creator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: agnes-creator-studio
+    ports:
+      - "7860:7860"
+    environment:
+      - AGNES_API_KEY=${AGNES_API_KEY}
+      - GRADIO_SERVER_NAME=0.0.0.0
+      - GRADIO_SERVER_PORT=7860
+      - GRADIO_TEMP_DIR=/tmp/gradio
+    volumes:
+      - ./outputs:/app/outputs
+      - ./history.json:/app/history.json
+      - ./logs:/var/log/supervisor
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G

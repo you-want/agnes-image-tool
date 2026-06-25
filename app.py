@@ -912,11 +912,20 @@ def create_ui():
 
 # ==================== 启动应用 ====================
 if __name__ == "__main__":
+    import os
+    
     demo = create_ui()
+    
+    server_name = os.getenv("GRADIO_SERVER_NAME", "0.0.0.0")
+    server_port = int(os.getenv("GRADIO_SERVER_PORT", 7860))
+    share = os.getenv("GRADIO_SHARE", "false").lower() == "true"
+    
     demo.launch(
-        server_name="0.0.0.0",
-        server_port=7860,
-        share=False,
+        server_name=server_name,
+        server_port=server_port,
+        share=share,
         show_error=True,
         css=CUSTOM_CSS,
+        max_threads=4,
+        favicon_path=None,
     )
