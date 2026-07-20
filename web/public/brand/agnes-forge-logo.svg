@@ -1,0 +1,21 @@
+<svg width="360" height="80" viewBox="0 0 360 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="5" y1="3" x2="67" y2="72" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FF9A62"/>
+      <stop offset="0.48" stop-color="#E85A25"/>
+      <stop offset="1" stop-color="#A63BCE"/>
+    </linearGradient>
+    <linearGradient id="word" x1="94" y1="24" x2="331" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#16131A"/>
+      <stop offset="0.55" stop-color="#16131A"/>
+      <stop offset="0.56" stop-color="#E85A25"/>
+      <stop offset="1" stop-color="#A63BCE"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="72" height="72" rx="22" fill="url(#bg)"/>
+  <path d="M23 59L35.8 23.55C36.98 20.27 41.61 20.23 42.85 23.5L56.38 59H47.36L44.24 50.03H34.63L31.69 59H23Z" fill="white"/>
+  <path d="M37.03 42.48L39.42 34.59L41.96 42.48H37.03Z" fill="#D94D24"/>
+  <path d="M59 15L60.47 19.2L64.67 20.67L60.47 22.13L59 26.33L57.53 22.13L53.33 20.67L57.53 19.2L59 15Z" fill="white"/>
+  <path d="M23 59H56.38" stroke="white" stroke-width="3" stroke-linecap="round" opacity="0.92"/>
+  <text x="94" y="52" fill="url(#word)" font-family="Space Grotesk, Inter, Arial, sans-serif" font-size="38" font-weight="650" letter-spacing="-1.4">Agnes Forge</text>
+</svg>

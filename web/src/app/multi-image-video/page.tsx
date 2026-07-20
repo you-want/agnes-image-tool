@@ -1,0 +1,303 @@
+"use client";
+
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { GalleryHorizontal, Loader2 } from "lucide-react";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import PromptEditor from "@/components/prompt/PromptEditor";
+import VideoPlayer from "@/components/video/VideoPlayer";
+import {
+  VIDEO_RATIO_OPTIONS,
+  VIDEO_RESOLUTION_CHOICES,
+  VIDEO_DURATION_CHOICES,
+  VIDEO_FRAME_RATE_CHOICES,
+  VIDEO_MODE_OPTIONS,
+  type VideoRatio,
+  calculateFrames,
+  getMaxFrames,
+  getVideoDimensions,
+} from "@/lib/constants";
+import { useTranslations } from "@/hooks/useLocale";
+
+interface VideoState {
+  prompt: string;
+  negativePrompt: string;
+  imageUrls: string;
+  mode: string;
+  resolution: string;
+  ratio: VideoRatio;
+  duration: number;
+  frameRate: number;
+}
+
+export default function MultiImageVideoPage() {
+  const t = useTranslations();
+  const [state, setState] = useState<VideoState>({
+    prompt: "",
+    negativePrompt: "",
+    imageUrls: "",
+    mode: "ti2vid",
+    resolution: "720p",
+    ratio: "16:9",
+    duration: 5,
+    frameRate: 24,
+  });
+  const [videoUrl, setVideoUrl] = useState("");
+  const [status, setStatus] = useState("");
+  const [progress, setProgress] = useState(0);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (key: keyof VideoState, value: unknown) => {
+    setState((s) => ({ ...s, [key]: value }));
+  };
+
+  const handleSubmit = async () => {
+    if (!state.prompt.trim()) return;
+    if (!state.imageUrls.trim()) return;
+
+    const imageUrls = state.imageUrls
+      .split("\n")
+      .map((u) => u.trim())
+      .filter(Boolean);
+
+    if (imageUrls.length === 0) {
+      setError(t("error.uploadRequired"));
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+    setVideoUrl("");
+    setStatus("queued");
+    setProgress(0);
+
+    try {
+      const dims = getVideoDimensions(state.resolution, state.ratio);
+      const maxFrames = getMaxFrames(state.resolution);
+      const autoFrames = calculateFrames(state.duration, state.frameRate);
+
+      const payload: Record<string, unknown> = {
+        prompt: state.prompt,
+        model: "agnes-video-v2.0",
+        frame_rate: state.frameRate,
+        extra_body: {
+          image: imageUrls,
+          mode: state.mode === "keyframes" ? "keyframes" : undefined,
+        },
+      };
+
+      if (dims) {
+        payload.width = dims.w;
+        payload.height = dims.h;
+      }
+
+      payload.num_frames = Math.min(autoFrames, maxFrames);
+
+      if (state.negativePrompt) payload.negative_prompt = state.negativePrompt;
+
+      const res = await fetch("/api/video/generate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      const videoId = data.data?.video_id || data.data?.id || data.data?.task_id;
+      if (!videoId) throw new Error(t("error.noVideoTaskId"));
+
+      pollVideoStatus(videoId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("error.generationFailed"));
+      setStatus("failed");
+      setLoading(false);
+    }
+  };
+
+  const pollVideoStatus = async (videoId: string) => {
+    let waited = 0;
+    const maxWait = 1800_000;
+    const interval = 5000;
+
+    while (waited < maxWait) {
+      await new Promise((r) => setTimeout(r, interval));
+      waited += interval;
+
+      try {
+        const res = await fetch(`/api/video/status/${encodeURIComponent(videoId)}`);
+        const data = await res.json();
+
+        if (data.error) {
+          setStatus("failed");
+          setError(data.error);
+          return;
+        }
+
+        const statusData = data.data;
+        const s = statusData.status;
+        const p = statusData.progress || 0;
+
+        setStatus(s);
+        setProgress(p);
+
+        if (s === "completed") {
+          setVideoUrl(statusData.url || "");
+          setLoading(false);
+          setStatus("");
+          setProgress(100);
+          return;
+        }
+
+        if (s === "failed") {
+          setError(statusData.error?.message || t("error.generationFailed"));
+          setStatus("failed");
+          setLoading(false);
+          return;
+        }
+      } catch (err) {
+        console.error("Poll error:", err);
+      }
+    }
+
+    setError(t("error.videoTimeout"));
+    setStatus("failed");
+    setLoading(false);
+  };
+
+  return (
+    <div className="py-8">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-[1400px] mx-auto"
+      >
+        <div className="text-center mb-10">
+          <h1 className="font-display text-3xl font-bold">{t("miv.title")}</h1>
+          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+            {t("miv.subtitle")}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Left Panel */}
+          <div className="lg:col-span-2 xl:col-span-3">
+            <Card>
+              <div className="space-y-4">
+                <PromptEditor
+                  label={t("miv.videoDescription")}
+                  placeholder={t("miv.videoPlaceholder")}
+                  value={state.prompt}
+                  onChange={(e) => handleChange("prompt", e.target.value)}
+                  onOptimize={() => window.location.href = "/optimize"}
+                  rows={4}
+                />
+
+                <Input
+                  label={t("miv.negativePrompt")}
+                  placeholder={t("miv.negativePlaceholder")}
+                  value={state.negativePrompt}
+                  onChange={(e) => handleChange("negativePrompt", e.target.value)}
+                />
+
+                {/* Image URLs */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-semibold uppercase tracking-wide" style={{ color: "var(--text-secondary)" }}>
+                    {t("miv.imageUrls")}
+                  </label>
+                  <textarea
+                    value={state.imageUrls}
+                    onChange={(e) => handleChange("imageUrls", e.target.value)}
+                    placeholder={"https://example.com/keyframe1.png\nhttps://example.com/keyframe2.png"}
+                    rows={4}
+                    className="w-full rounded-lg border px-3.5 py-2.5 text-sm outline-none resize-y transition-all duration-200 focus:ring-2 focus:ring-[var(--accent-soft)]"
+                    style={{
+                      background: "var(--bg-input)",
+                      borderColor: "var(--border)",
+                      color: "var(--text-primary)",
+                    }}
+                  />
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{t("miv.urlLineHint")}</p>
+                </div>
+
+                <Select
+                  label={t("miv.mode")}
+                  options={[
+                    { value: "ti2vid", label: t("miv.modeNormal") },
+                    { value: "keyframes", label: t("miv.modeKeyframes") },
+                  ]}
+                  value={state.mode}
+                  onChange={(e) => handleChange("mode", e.target.value)}
+                />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Select
+                    label={t("miv.resolution")}
+                    options={VIDEO_RESOLUTION_CHOICES.map((r) => ({ value: r, label: r }))}
+                    value={state.resolution}
+                    onChange={(e) => handleChange("resolution", e.target.value)}
+                  />
+                  <Select
+                    label={t("miv.ratio")}
+                    options={VIDEO_RATIO_OPTIONS.map((r) => ({ value: r, label: r }))}
+                    value={state.ratio}
+                    onChange={(e) => handleChange("ratio", e.target.value as VideoRatio)}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <Select
+                    label={t("miv.duration")}
+                    options={VIDEO_DURATION_CHOICES.map((d) => ({ value: String(d), label: t("common.seconds", { value: d }) }))}
+                    value={String(state.duration)}
+                    onChange={(e) => handleChange("duration", Number(e.target.value))}
+                  />
+                  <Select
+                    label={t("miv.frameRate")}
+                    options={VIDEO_FRAME_RATE_CHOICES.map((f) => ({ value: String(f), label: t("common.framesPerSecond", { value: f }) }))}
+                    value={String(state.frameRate)}
+                    onChange={(e) => handleChange("frameRate", Number(e.target.value))}
+                  />
+                </div>
+
+                {error && (
+                  <div className="rounded-lg px-3 py-2 text-sm" style={{
+                    background: "var(--error-soft)",
+                    color: "var(--error)",
+                  }}>
+                    {error}
+                  </div>
+                )}
+
+                <Button
+                  onClick={handleSubmit}
+                  loading={loading}
+                  disabled={!state.prompt.trim() || !state.imageUrls.trim()}
+                  className="w-full"
+                  size="lg"
+                >
+                  {loading ? <Loader2 size={18} className="animate-spin" /> : <GalleryHorizontal size={18} />}
+                  {loading ? t("miv.generating") : t("miv.generate")}
+                </Button>
+              </div>
+            </Card>
+          </div>
+
+          {/* Right Panel */}
+          <div className="lg:col-span-3 xl:col-span-4">
+            <VideoPlayer
+              src={videoUrl}
+              progress={progress}
+              status={status}
+              error={error}
+            />
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+}

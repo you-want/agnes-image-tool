@@ -1,0 +1,284 @@
+{
+  "meta": {
+    "title": "Agnes Forge | AI Image & Video Studio",
+    "description": "Turn prompts into polished images and videos in one creative workspace."
+  },
+  "brand": {
+    "name": "Agnes Forge",
+    "logoAlt": "Agnes Forge logo",
+    "tagline": "Imagine. Shape. Move."
+  },
+  "nav": {
+    "home": "Home",
+    "promptGenerator": "Prompt Gen",
+    "promptOptimizer": "Prompt Optimize",
+    "textToImage": "Text to Image",
+    "imageToImage": "Image to Image",
+    "textToVideo": "Text to Video",
+    "imageToVideo": "Image to Video",
+    "multiImageVideo": "Multi-Image Video"
+  },
+  "home": {
+    "badge": "Agnes Forge · AI Creative Studio",
+    "heroTitle": "Where ideas become",
+    "heroTitleItalic": "masterpieces",
+    "heroSubtitle": "AI-powered image and video creation tool. Supports text-to-image, image-to-image, text-to-video, and image-to-video with professional-grade quality and creative control.",
+    "cta": {
+      "startCreating": "Start Creating",
+      "promptAssistant": "Prompt Assistant"
+    },
+    "features": {
+      "prompt": {
+        "title": "Prompt Generator",
+        "desc": "Use AI to quickly generate high-quality prompts for images and videos"
+      },
+      "optimize": {
+        "title": "Prompt Optimizer",
+        "desc": "Intelligently optimize your raw prompts for better generation results"
+      },
+      "textToImage": {
+        "title": "Text to Image",
+        "desc": "Generate high-quality images from text descriptions, supporting 1K~4K"
+      },
+      "imageToImage": {
+        "title": "Image to Image",
+        "desc": "Upload a reference image and transform its style or edit it with prompts"
+      },
+      "textToVideo": {
+        "title": "Text to Video",
+        "desc": "Directly generate cinematic video clips from text descriptions"
+      },
+      "imageToVideo": {
+        "title": "Image to Video",
+        "desc": "Transform static images into dynamic videos"
+      },
+      "multiImageVideo": {
+        "title": "Multi-Image Video",
+        "desc": "Animate multiple keyframe images with smooth transitions"
+      }
+    },
+    "useFeature": "Use Feature"
+  },
+  "promptGen": {
+    "title": "Prompt Generator",
+    "subtitle": "Enter a topic and preferences, let AI generate professional-grade prompts",
+    "task": {
+      "image": "Image Prompt",
+      "video": "Video Prompt"
+    },
+    "subject": "Subject",
+    "subjectPlaceholder": "e.g., A ginger cat in a spacesuit walking on the moon",
+    "style": "Style",
+    "scene": "Scene",
+    "lighting": "Lighting",
+    "none": "Any",
+    "generate": "✨ Generate Prompt",
+    "generating": "Generating...",
+    "result": "Result",
+    "placeholder": "Results will appear here after clicking Generate...",
+    "styleRealistic": "Realistic",
+    "styleAnime": "Anime",
+    "styleCyberpunk": "Cyberpunk",
+    "styleFantasy": "Fantasy",
+    "styleMinimalist": "Minimalist",
+    "styleOilPainting": "Oil Painting",
+    "styleWatercolor": "Watercolor",
+    "style3DRender": "3D Render",
+    "styleCinematic": "Cinematic",
+    "stylePixelArt": "Pixel Art",
+    "scenePortrait": "Portrait",
+    "sceneLandscape": "Landscape",
+    "sceneProduct": "Product",
+    "sceneArchitecture": "Architecture",
+    "sceneAbstract": "Abstract Art",
+    "sceneSciFi": "Sci-Fi",
+    "sceneFantasyWorld": "Fantasy World",
+    "sceneCityNight": "City Night",
+    "sceneNature": "Nature",
+    "sceneSpace": "Space",
+    "lightingNatural": "Natural Light",
+    "lightingGoldenHour": "Golden Hour",
+    "lightingStudio": "Studio Lighting",
+    "lightingNeon": "Neon",
+    "lightingDramatic": "Dramatic Lighting",
+    "lightingSoft": "Soft Light",
+    "lightingBacklight": "Backlight",
+    "lightingVolumetric": "Volumetric"
+  },
+  "promptOpt": {
+    "title": "Prompt Optimizer",
+    "subtitle": "Paste your original prompt and let AI optimize it for better results",
+    "original": "Original Prompt",
+    "optimized": "Optimized Result",
+    "inputLabel": "Input Prompt",
+    "outputLabel": "Optimized Prompt",
+    "placeholder": "e.g., A cat on a table",
+    "outputPlaceholder": "Results will appear here after clicking Optimize...",
+    "hint": "Enter the prompt you want to optimize",
+    "waiting": "Waiting for optimization...",
+    "optimize": "✨ Optimize Prompt",
+    "optimizing": "Optimizing..."
+  },
+  "t2i": {
+    "title": "Text to Image",
+    "subtitle": "Enter a prompt and let AI generate high-quality images",
+    "prompt": "Prompt",
+    "promptPlaceholder": "Describe the image you want, e.g., A cute orange cat sitting on a sunny windowsill",
+    "negativePrompt": "Negative Prompt",
+    "negativePlaceholder": "Describe what you don't want to see",
+    "size": "Size Preset",
+    "ratio": "Aspect Ratio",
+    "count": "Generation Count",
+    "countPlaceholder": "1-4",
+    "generate": "🎨 Generate Image",
+    "generating": "Generating..."
+  },
+  "i2i": {
+    "title": "Image to Image",
+    "subtitle": "Upload a reference image and transform its style or edit it with prompts",
+    "referenceImage": "Reference Image",
+    "uploadClick": "Click to upload image",
+    "maxSize": "Max 10MB",
+    "styleDesc": "Style Description",
+    "stylePlaceholder": "e.g., Oil painting style, impressionism, warm tones",
+    "negativePrompt": "Negative Prompt",
+    "negativePlaceholder": "Describe what you don't want to see",
+    "strength": "Denoising Strength",
+    "count": "Generation Count",
+    "generate": "🎨 Generate Image",
+    "generating": "Generating..."
+  },
+  "t2v": {
+    "title": "Text to Video",
+    "subtitle": "Enter a description and let AI generate high-quality video clips",
+    "description": "Video Description",
+    "descriptionPlaceholder": "Describe the video you want, e.g., Ocean waves crashing against rocks at sunset, camera slowly pushing in",
+    "negativePrompt": "Negative Prompt",
+    "negativePlaceholder": "Describe what you don't want to see",
+    "resolution": "Resolution",
+    "ratio": "Aspect Ratio",
+    "duration": "Duration",
+    "frameRate": "Frame Rate",
+    "estimated": "Estimated output: {dims} · {frames} frames · ~{duration}s",
+    "advanced": "Advanced Settings",
+    "collapseAdvanced": "Collapse Advanced Settings",
+    "seed": "Seed",
+    "seedPlaceholder": "Leave blank for random",
+    "steps": "Inference Steps",
+    "width": "Custom Width",
+    "widthPlaceholder": "Leave blank to use resolution preset",
+    "height": "Custom Height",
+    "heightPlaceholder": "Leave blank to use resolution preset",
+    "generate": "🎬 Generate Video",
+    "generating": "Generating..."
+  },
+  "i2v": {
+    "title": "Image to Video",
+    "subtitle": "Transform static images into dynamic videos",
+    "referenceImage": "Reference Image",
+    "uploadClick": "Click to upload image",
+    "imageUrl": "Or enter image URL",
+    "urlHint": "Publicly accessible image URL recommended",
+    "videoDescription": "Video Description",
+    "videoPlaceholder": "Describe the motion you want, e.g., Person slowly turns around, hair blowing in the wind",
+    "negativePrompt": "Negative Prompt",
+    "negativePlaceholder": "Describe what you don't want to see",
+    "resolution": "Resolution",
+    "ratio": "Aspect Ratio",
+    "duration": "Duration",
+    "frameRate": "Frame Rate",
+    "advanced": "Advanced Settings",
+    "collapseAdvanced": "Collapse Advanced Settings",
+    "seed": "Seed",
+    "seedPlaceholder": "Leave blank for random",
+    "steps": "Inference Steps",
+    "width": "Custom Width",
+    "widthPlaceholder": "Leave blank to use resolution preset",
+    "height": "Custom Height",
+    "heightPlaceholder": "Leave blank to use resolution preset",
+    "generate": "🎬 Generate Video",
+    "generating": "Generating..."
+  },
+  "miv": {
+    "title": "Multi-Image Video / Keyframe Animation",
+    "subtitle": "Provide multiple keyframe images, AI generates smooth transition videos between them",
+    "videoDescription": "Video Description",
+    "videoPlaceholder": "Describe the multi-image video or keyframe animation, e.g., Generate a smooth transition between two images",
+    "negativePrompt": "Negative Prompt",
+    "negativePlaceholder": "Describe what you don't want to see",
+    "imageUrls": "Image URL List",
+    "urlLineHint": "One public image URL per line",
+    "mode": "Generation Mode",
+    "modeKeyframes": "Keyframe Animation",
+    "modeNormal": "Text/Image to Video",
+    "resolution": "Resolution",
+    "ratio": "Aspect Ratio",
+    "duration": "Duration",
+    "frameRate": "Frame Rate",
+    "generate": "🎬 Generate Video",
+    "generating": "Generating..."
+  },
+  "settings": {
+    "title": "Settings",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "Enter your API Key",
+    "apiKeyHint": "Used to call Agnes AI API",
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "https://apihub.agnes-ai.com",
+    "baseUrlHint": "API server address",
+    "save": "Save Config",
+    "saved": "Saved",
+    "reset": "Reset",
+    "close": "Close"
+  },
+  "common": {
+    "copy": "Copy",
+    "copied": "Copied",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "optimize": "✨ Optimize",
+    "generate": "🎨 Generate",
+    "copyPrompt": "Copy prompt",
+    "switchLanguage": "Switch language",
+    "openSettings": "Open settings",
+    "toggleTheme": "Toggle theme",
+    "close": "Close",
+    "preview": "Preview",
+    "imageUrlPlaceholder": "https://example.com/image.png",
+    "download": "Download",
+    "zoomIn": "Zoom in",
+    "seconds": "{value}s",
+    "framesPerSecond": "{value} fps"
+  },
+  "footer": {
+    "copyright": "© 2026 Agnes Forge"
+  },
+  "error": {
+    "generationFailed": "Generation failed",
+    "noVideoTaskId": "Failed to get video task ID",
+    "videoTimeout": "Video generation timed out (exceeded 30 minutes)",
+    "readImage": "Failed to read uploaded image",
+    "uploadRequired": "Please upload an image or enter an image URL",
+    "imageTooLarge": "Image size cannot exceed 10MB"
+  },
+  "videoPlayer": {
+    "waiting": "Waiting to generate...",
+    "queued": "Task submitted, queuing...",
+    "progress": "Generating... {progress}%",
+    "completed": "Generation complete",
+    "failed": "Video generation failed",
+    "retry": "Retry"
+  },
+  "imageGallery": {
+    "waiting": "Waiting to generate...",
+    "preview": "Image Preview",
+    "download": "Download Image"
+  },
+  "field": {
+    "custom": "Custom"
+  },
+  "locale": {
+    "zh-CN": "中文",
+    "en": "English"
+  }
+}

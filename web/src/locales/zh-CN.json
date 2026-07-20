@@ -1,0 +1,284 @@
+{
+  "meta": {
+    "title": "Agnes Forge｜AI 图像与视频创作平台",
+    "description": "从提示词到图像与视频，让每一个创意快速成形。"
+  },
+  "brand": {
+    "name": "Agnes Forge",
+    "logoAlt": "Agnes Forge 标志",
+    "tagline": "让灵感成形，让画面流动"
+  },
+  "nav": {
+    "home": "首页",
+    "promptGenerator": "提示词生成",
+    "promptOptimizer": "提示词优化",
+    "textToImage": "文生图",
+    "imageToImage": "图生图",
+    "textToVideo": "文生视频",
+    "imageToVideo": "图生视频",
+    "multiImageVideo": "多图视频"
+  },
+  "home": {
+    "badge": "Agnes Forge · AI Creative Studio",
+    "heroTitle": "让灵感化为",
+    "heroTitleItalic": "杰作",
+    "heroSubtitle": "AI 驱动的图像与视频创作工具。支持文生图、图生图、文生视频、图生视频，融合专业级画质与创意控制。",
+    "cta": {
+      "startCreating": "开始创作",
+      "promptAssistant": "提示词助手"
+    },
+    "features": {
+      "prompt": {
+        "title": "提示词生成",
+        "desc": "用 AI 帮你快速生成高质量图像/视频提示词"
+      },
+      "optimize": {
+        "title": "提示词优化",
+        "desc": "智能优化你的原始提示词，获得更好效果"
+      },
+      "textToImage": {
+        "title": "文生图",
+        "desc": "根据文字描述生成高质量图像，支持 1K~4K"
+      },
+      "imageToImage": {
+        "title": "图生图",
+        "desc": "上传参考图，通过提示词进行风格转换和编辑"
+      },
+      "textToVideo": {
+        "title": "文生视频",
+        "desc": "用文字描述直接生成电影级视频片段"
+      },
+      "imageToVideo": {
+        "title": "图生视频",
+        "desc": "将静态图片转化为动态视频"
+      },
+      "multiImageVideo": {
+        "title": "多图视频",
+        "desc": "多张图片关键帧动画，生成流畅过渡视频"
+      }
+    },
+    "useFeature": "使用功能"
+  },
+  "promptGen": {
+    "title": "提示词生成器",
+    "subtitle": "输入主题和偏好，AI 帮你生成专业级提示词",
+    "task": {
+      "image": "图像提示词",
+      "video": "视频提示词"
+    },
+    "subject": "主题描述",
+    "subjectPlaceholder": "例如：一只穿着宇航服的橘猫在月球上散步",
+    "style": "风格",
+    "scene": "场景",
+    "lighting": "光照",
+    "none": "不限",
+    "generate": "✨ 生成提示词",
+    "generating": "生成中...",
+    "result": "生成结果",
+    "placeholder": "点击「生成」后这里会显示结果...",
+    "styleRealistic": "写实风格",
+    "styleAnime": "动漫风格",
+    "styleCyberpunk": "赛博朋克",
+    "styleFantasy": "奇幻风格",
+    "styleMinimalist": "极简主义",
+    "styleOilPainting": "油画风格",
+    "styleWatercolor": "水彩风格",
+    "style3DRender": "3D 渲染",
+    "styleCinematic": "电影感",
+    "stylePixelArt": "像素艺术",
+    "scenePortrait": "人物肖像",
+    "sceneLandscape": "风景",
+    "sceneProduct": "产品展示",
+    "sceneArchitecture": "建筑",
+    "sceneAbstract": "抽象艺术",
+    "sceneSciFi": "科幻场景",
+    "sceneFantasyWorld": "奇幻世界",
+    "sceneCityNight": "城市夜景",
+    "sceneNature": "自然生态",
+    "sceneSpace": "太空宇宙",
+    "lightingNatural": "自然光",
+    "lightingGoldenHour": "黄金时刻",
+    "lightingStudio": "影棚灯光",
+    "lightingNeon": "霓虹灯",
+    "lightingDramatic": "戏剧性光影",
+    "lightingSoft": "柔和光线",
+    "lightingBacklight": "逆光",
+    "lightingVolumetric": "体积光"
+  },
+  "promptOpt": {
+    "title": "提示词优化器",
+    "subtitle": "粘贴你的原始提示词，AI 帮你优化以获得更好的生成效果",
+    "original": "原始提示词",
+    "optimized": "优化结果",
+    "inputLabel": "输入提示词",
+    "outputLabel": "优化后的提示词",
+    "placeholder": "例如：一只猫在桌子上",
+    "outputPlaceholder": "点击「优化」后这里会显示结果...",
+    "hint": "输入你想优化的提示词",
+    "waiting": "等待优化结果...",
+    "optimize": "✨ 优化提示词",
+    "optimizing": "优化中..."
+  },
+  "t2i": {
+    "title": "文生图",
+    "subtitle": "输入提示词，AI 帮你生成高质量图像",
+    "prompt": "提示词",
+    "promptPlaceholder": "描述你想生成的图像，例如：一只可爱的橘猫坐在窗台上，阳光明媚",
+    "negativePrompt": "负面提示词",
+    "negativePlaceholder": "描述你不想出现的内容",
+    "size": "尺寸档位",
+    "ratio": "宽高比",
+    "count": "生成数量",
+    "countPlaceholder": "1-4",
+    "generate": "🎨 生成图片",
+    "generating": "生成中..."
+  },
+  "i2i": {
+    "title": "图生图",
+    "subtitle": "上传参考图片，通过提示词进行风格转换和编辑",
+    "referenceImage": "参考图片",
+    "uploadClick": "点击上传图片",
+    "maxSize": "最大 10MB",
+    "styleDesc": "风格描述",
+    "stylePlaceholder": "例如：油画风格，印象派，温暖色调",
+    "negativePrompt": "负面提示词",
+    "negativePlaceholder": "描述你不想出现的内容",
+    "strength": "重绘强度",
+    "count": "生成数量",
+    "generate": "🎨 生成图片",
+    "generating": "生成中..."
+  },
+  "t2v": {
+    "title": "文生视频",
+    "subtitle": "输入文字描述，AI 帮你生成高质量视频片段",
+    "description": "视频描述",
+    "descriptionPlaceholder": "描述你想生成的视频，例如：夕阳下的海浪拍打礁石，镜头缓慢推近",
+    "negativePrompt": "负面提示词",
+    "negativePlaceholder": "描述你不想出现的内容",
+    "resolution": "分辨率",
+    "ratio": "比例",
+    "duration": "时长",
+    "frameRate": "帧率",
+    "estimated": "预计输出：{dims} · {frames} 帧 · ~{duration}s",
+    "advanced": "高级参数",
+    "collapseAdvanced": "收起高级参数",
+    "seed": "随机种子",
+    "seedPlaceholder": "留空则随机",
+    "steps": "推理步数",
+    "width": "自定义宽度",
+    "widthPlaceholder": "留空使用分辨率预设",
+    "height": "自定义高度",
+    "heightPlaceholder": "留空使用分辨率预设",
+    "generate": "🎬 生成视频",
+    "generating": "生成中..."
+  },
+  "i2v": {
+    "title": "图生视频",
+    "subtitle": "将静态图片转化为动态视频",
+    "referenceImage": "参考图片",
+    "uploadClick": "点击上传图片",
+    "imageUrl": "或输入图片 URL",
+    "urlHint": "推荐使用公网可访问的图片 URL",
+    "videoDescription": "视频描述",
+    "videoPlaceholder": "描述你想让图片产生的动态，例如：人物缓慢转身，头发随风飘动",
+    "negativePrompt": "负面提示词",
+    "negativePlaceholder": "描述你不想出现的内容",
+    "resolution": "分辨率",
+    "ratio": "比例",
+    "duration": "时长",
+    "frameRate": "帧率",
+    "advanced": "高级参数",
+    "collapseAdvanced": "收起高级参数",
+    "seed": "随机种子",
+    "seedPlaceholder": "留空则随机",
+    "steps": "推理步数",
+    "width": "自定义宽度",
+    "widthPlaceholder": "留空使用分辨率预设",
+    "height": "自定义高度",
+    "heightPlaceholder": "留空使用分辨率预设",
+    "generate": "🎬 生成视频",
+    "generating": "生成中..."
+  },
+  "miv": {
+    "title": "多图视频 / 关键帧动画",
+    "subtitle": "上传多张关键帧图片，AI 在它们之间生成流畅过渡视频",
+    "videoDescription": "视频描述",
+    "videoPlaceholder": "描述多图视频或关键帧动画，例如：在两张图片之间生成平滑过渡",
+    "negativePrompt": "负面提示词",
+    "negativePlaceholder": "描述你不想出现的内容",
+    "imageUrls": "图片 URL 列表",
+    "urlLineHint": "每行一个公网可访问的图片 URL",
+    "mode": "生成模式",
+    "modeKeyframes": "关键帧动画",
+    "modeNormal": "文/图生视频",
+    "resolution": "分辨率",
+    "ratio": "比例",
+    "duration": "时长",
+    "frameRate": "帧率",
+    "generate": "🎬 生成视频",
+    "generating": "生成中..."
+  },
+  "settings": {
+    "title": "设置",
+    "apiKey": "API Key",
+    "apiKeyPlaceholder": "输入你的 API Key",
+    "apiKeyHint": "用于调用 Agnes AI API",
+    "baseUrl": "Base URL",
+    "baseUrlPlaceholder": "https://apihub.agnes-ai.com",
+    "baseUrlHint": "API 服务器地址",
+    "save": "保存配置",
+    "saved": "已保存",
+    "reset": "重置",
+    "close": "关闭"
+  },
+  "common": {
+    "copy": "复制",
+    "copied": "已复制",
+    "cancel": "取消",
+    "confirm": "确认",
+    "optimize": "✨ 优化",
+    "generate": "🎨 生成",
+    "copyPrompt": "复制提示词",
+    "switchLanguage": "切换语言",
+    "openSettings": "打开设置",
+    "toggleTheme": "切换主题",
+    "close": "关闭",
+    "preview": "预览",
+    "imageUrlPlaceholder": "https://example.com/image.png",
+    "download": "下载",
+    "zoomIn": "放大预览",
+    "seconds": "{value} 秒",
+    "framesPerSecond": "{value} 帧/秒"
+  },
+  "footer": {
+    "copyright": "© 2026 Agnes Forge"
+  },
+  "error": {
+    "generationFailed": "生成失败",
+    "noVideoTaskId": "未获取到视频任务 ID",
+    "videoTimeout": "视频生成超时（超过 30 分钟）",
+    "readImage": "无法读取上传的图片",
+    "uploadRequired": "请上传图片或输入图片 URL",
+    "imageTooLarge": "图片大小不能超过 10MB"
+  },
+  "videoPlayer": {
+    "waiting": "等待生成...",
+    "queued": "任务已提交，排队中...",
+    "progress": "生成中... {progress}%",
+    "completed": "生成完成",
+    "failed": "视频生成失败",
+    "retry": "重试"
+  },
+  "imageGallery": {
+    "waiting": "等待生成...",
+    "preview": "图片预览",
+    "download": "下载图片"
+  },
+  "field": {
+    "custom": "自定义"
+  },
+  "locale": {
+    "zh-CN": "中文",
+    "en": "English"
+  }
+}
