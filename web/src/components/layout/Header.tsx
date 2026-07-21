@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Globe, Moon, Settings, Sun } from "lucide-react";
+import { Check, Globe, Moon, Settings, Sun, Clock } from "lucide-react";
 import SettingsModal from "@/components/settings/SettingsModal";
+import HistoryButton from "@/components/layout/HistoryButton";
+import HistoryModal from "@/components/layout/HistoryModal";
 import { useTheme } from "@/hooks/useTheme";
 import { NAV_ITEMS } from "@/lib/constants";
 import { useLocale, useTranslations } from "@/hooks/useLocale";
@@ -16,6 +18,7 @@ export default function Header() {
   const { locale, setLocale } = useLocale();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [localeOpen, setLocaleOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [brandFirst, ...brandRest] = t("brand.name").split(" ");
 
   return (
@@ -113,6 +116,15 @@ export default function Header() {
               )}
             </AnimatePresence>
           </div>
+
+          <button
+            onClick={() => setHistoryOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/[0.05]"
+            style={{ color: "var(--text-secondary)" }}
+            aria-label={t("history.title")}
+          >
+            <Clock size={18} />
+          </button>
 
           <button
             onClick={() => setSettingsOpen(true)}

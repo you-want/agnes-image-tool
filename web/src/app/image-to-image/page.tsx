@@ -2,27 +2,24 @@
 
 import { useState, useRef, ChangeEvent } from "react";
 import { motion } from "framer-motion";
-import { Upload, Image as ImageIcon, Loader2, Sparkles } from "lucide-react";
+import { Upload, Loader2, Sparkles } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import Slider from "@/components/ui/Slider";
 import PromptEditor from "@/components/prompt/PromptEditor";
 import ImageGallery from "@/components/image/ImageGallery";
 import { IMAGE_SIZE_OPTIONS, IMAGE_RATIO_OPTIONS, type ImageSizePreset, type ImageRatio } from "@/lib/constants";
 import { useTranslations } from "@/hooks/useLocale";
+import { usePromptState } from "@/hooks/usePromptState";
+import { addHistoryEntry } from "@/lib/history-store";
 
 export default function ImageToImagePage() {
   const t = useTranslations();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
-  const [prompt, setPrompt] = useState("");
-  const [negativePrompt, setNegativePrompt] = useState("");
+  const [prompt, setPrompt] = usePromptState("");
   const [size, setSize] = useState<ImageSizePreset>("1K");
   const [ratio, setRatio] = useState<ImageRatio>("1:1");
-  const [strength, setStrength] = useState(0.75);
-  const [count, setCount] = useState(1);
   const [images, setImages] = useState<Array<{ url?: string; b64_json?: string; revised_prompt?: string | null }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -55,7 +52,6 @@ export default function ImageToImagePage() {
     setImages([]);
 
     try {
-      // Read file as base64 data URI
       const base64 = await readFileAsBase64(imageFile);
       const imageUrl = `data:${imageFile.type};base64,${base64}`;
 
@@ -67,16 +63,25 @@ export default function ImageToImagePage() {
           size,
           ratio,
           image: imageUrl,
-          strength,
-          n: count,
-          negative_prompt: negativePrompt || undefined,
         }),
       });
 
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      setImages(data.data?.data || []);
+      const generatedImages = data.data?.data || [];
+      setImages(generatedImages);
+
+      // Record each successful image in history
+      for (const img of generatedImages) {
+        addHistoryEntry({
+          type: "image",
+          sourceRoute: "/image-to-image",
+          prompt,
+          mediaUrl: img.url,
+          revisedPrompt: img.revised_prompt || undefined,
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("error.generationFailed"));
     } finally {
@@ -89,19 +94,19 @@ export default function ImageToImagePage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-[1400px] mx-auto"
+        className="container-page"
       >
-        <div className="text-center mb-10">
-          <h1 className="font-display text-3xl font-bold">{t("i2i.title")}</h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+        <div className="text-center lg:text-left mb-6">
+          <h1 className="font-display text-2xl lg:text-3xl font-bold">{t("i2i.title")}</h1>
+          <p className="mt-1.5 text-sm" style={{ color: "var(--text-secondary)" }}>
             {t("i2i.subtitle")}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Panel */}
-          <div className="lg:col-span-2 xl:col-span-3">
-            <Card>
+          <div className="lg:col-span-5">
+            <Card className="lg:sticky lg:top-20">
               <div className="space-y-4">
                 {/* Image Upload */}
                 <div>
@@ -141,13 +146,6 @@ export default function ImageToImagePage() {
                   rows={3}
                 />
 
-                <Input
-                  label={t("i2i.negativePrompt")}
-                  placeholder={t("i2i.negativePlaceholder")}
-                  value={negativePrompt}
-                  onChange={(e) => setNegativePrompt(e.target.value)}
-                />
-
                 <div className="grid grid-cols-2 gap-3">
                   <Select
                     label={t("t2i.size")}
@@ -162,25 +160,6 @@ export default function ImageToImagePage() {
                     onChange={(e) => setRatio(e.target.value as ImageRatio)}
                   />
                 </div>
-
-                <Slider
-                  label={t("i2i.strength")}
-                  min={0.1}
-                  max={1}
-                  step={0.05}
-                  value={strength}
-                  onChange={(e) => setStrength(Number(e.target.value))}
-                  valueLabel={`${strength.toFixed(2)}`}
-                />
-
-                <Input
-                  label={t("i2i.count")}
-                  type="number"
-                  min={1}
-                  max={4}
-                  value={String(count)}
-                  onChange={(e) => setCount(Math.min(4, Math.max(1, Number(e.target.value))))}
-                />
 
                 {error && (
                   <div className="rounded-lg px-3 py-2 text-sm" style={{
@@ -206,7 +185,7 @@ export default function ImageToImagePage() {
           </div>
 
           {/* Right Panel */}
-          <div className="lg:col-span-3 xl:col-span-4">
+          <div className="lg:col-span-7">
             <ImageGallery images={images} loading={loading} />
           </div>
         </div>
@@ -221,7 +200,7 @@ function readFileAsBase64(file: File): Promise<string> {
     reader.onload = () => {
       const result = reader.result;
       if (typeof result === "string") {
-        resolve(result.split(",")[1]); // Remove data URI prefix
+        resolve(result.split(",")[1]);
       } else {
         reject(new Error("Failed to read file"));
       }

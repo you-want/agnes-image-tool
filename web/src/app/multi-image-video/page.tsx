@@ -14,16 +14,16 @@ import {
   VIDEO_RESOLUTION_CHOICES,
   VIDEO_DURATION_CHOICES,
   VIDEO_FRAME_RATE_CHOICES,
-  VIDEO_MODE_OPTIONS,
   type VideoRatio,
   calculateFrames,
   getMaxFrames,
   getVideoDimensions,
 } from "@/lib/constants";
 import { useTranslations } from "@/hooks/useLocale";
+import { usePromptState } from "@/hooks/usePromptState";
+import { addHistoryEntry } from "@/lib/history-store";
 
-interface VideoState {
-  prompt: string;
+interface VideoParams {
   negativePrompt: string;
   imageUrls: string;
   mode: string;
@@ -35,8 +35,8 @@ interface VideoState {
 
 export default function MultiImageVideoPage() {
   const t = useTranslations();
-  const [state, setState] = useState<VideoState>({
-    prompt: "",
+  const [prompt, setPrompt] = usePromptState("");
+  const [params, setParams] = useState<VideoParams>({
     negativePrompt: "",
     imageUrls: "",
     mode: "ti2vid",
@@ -51,15 +51,15 @@ export default function MultiImageVideoPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (key: keyof VideoState, value: unknown) => {
-    setState((s) => ({ ...s, [key]: value }));
+  const handleChange = (key: keyof VideoParams, value: unknown) => {
+    setParams((s) => ({ ...s, [key]: value }));
   };
 
   const handleSubmit = async () => {
-    if (!state.prompt.trim()) return;
-    if (!state.imageUrls.trim()) return;
+    if (!prompt.trim()) return;
+    if (!params.imageUrls.trim()) return;
 
-    const imageUrls = state.imageUrls
+    const imageUrls = params.imageUrls
       .split("\n")
       .map((u) => u.trim())
       .filter(Boolean);
@@ -76,19 +76,22 @@ export default function MultiImageVideoPage() {
     setProgress(0);
 
     try {
-      const dims = getVideoDimensions(state.resolution, state.ratio);
-      const maxFrames = getMaxFrames(state.resolution);
-      const autoFrames = calculateFrames(state.duration, state.frameRate);
+      const dims = getVideoDimensions(params.resolution, params.ratio);
+      const maxFrames = getMaxFrames(params.resolution);
+      const autoFrames = calculateFrames(params.duration, params.frameRate);
 
       const payload: Record<string, unknown> = {
-        prompt: state.prompt,
+        prompt,
         model: "agnes-video-v2.0",
-        frame_rate: state.frameRate,
+        frame_rate: params.frameRate,
         extra_body: {
           image: imageUrls,
-          mode: state.mode === "keyframes" ? "keyframes" : undefined,
-        },
+        } as Record<string, unknown>,
       };
+
+      if (params.mode === "keyframes") {
+        (payload.extra_body as Record<string, unknown>).mode = "keyframes";
+      }
 
       if (dims) {
         payload.width = dims.w;
@@ -97,7 +100,7 @@ export default function MultiImageVideoPage() {
 
       payload.num_frames = Math.min(autoFrames, maxFrames);
 
-      if (state.negativePrompt) payload.negative_prompt = state.negativePrompt;
+      if (params.negativePrompt) payload.negative_prompt = params.negativePrompt;
 
       const res = await fetch("/api/video/generate", {
         method: "POST",
@@ -146,10 +149,19 @@ export default function MultiImageVideoPage() {
         setProgress(p);
 
         if (s === "completed") {
-          setVideoUrl(statusData.url || "");
+          const url = statusData.url || "";
+          setVideoUrl(url);
           setLoading(false);
           setStatus("");
           setProgress(100);
+
+          // Record video in history
+          addHistoryEntry({
+            type: "video",
+            sourceRoute: "/multi-image-video",
+            prompt,
+            mediaUrl: url,
+          });
           return;
         }
 
@@ -174,25 +186,25 @@ export default function MultiImageVideoPage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-[1400px] mx-auto"
+        className="container-page"
       >
-        <div className="text-center mb-10">
-          <h1 className="font-display text-3xl font-bold">{t("miv.title")}</h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+        <div className="text-center lg:text-left mb-6">
+          <h1 className="font-display text-2xl lg:text-3xl font-bold">{t("miv.title")}</h1>
+          <p className="mt-1.5 text-sm" style={{ color: "var(--text-secondary)" }}>
             {t("miv.subtitle")}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Panel */}
-          <div className="lg:col-span-2 xl:col-span-3">
-            <Card>
+          <div className="lg:col-span-5">
+            <Card className="lg:sticky lg:top-20">
               <div className="space-y-4">
                 <PromptEditor
                   label={t("miv.videoDescription")}
                   placeholder={t("miv.videoPlaceholder")}
-                  value={state.prompt}
-                  onChange={(e) => handleChange("prompt", e.target.value)}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
                   onOptimize={() => window.location.href = "/optimize"}
                   rows={4}
                 />
@@ -200,7 +212,7 @@ export default function MultiImageVideoPage() {
                 <Input
                   label={t("miv.negativePrompt")}
                   placeholder={t("miv.negativePlaceholder")}
-                  value={state.negativePrompt}
+                  value={params.negativePrompt}
                   onChange={(e) => handleChange("negativePrompt", e.target.value)}
                 />
 
@@ -210,7 +222,7 @@ export default function MultiImageVideoPage() {
                     {t("miv.imageUrls")}
                   </label>
                   <textarea
-                    value={state.imageUrls}
+                    value={params.imageUrls}
                     onChange={(e) => handleChange("imageUrls", e.target.value)}
                     placeholder={"https://example.com/keyframe1.png\nhttps://example.com/keyframe2.png"}
                     rows={4}
@@ -230,7 +242,7 @@ export default function MultiImageVideoPage() {
                     { value: "ti2vid", label: t("miv.modeNormal") },
                     { value: "keyframes", label: t("miv.modeKeyframes") },
                   ]}
-                  value={state.mode}
+                  value={params.mode}
                   onChange={(e) => handleChange("mode", e.target.value)}
                 />
 
@@ -238,13 +250,13 @@ export default function MultiImageVideoPage() {
                   <Select
                     label={t("miv.resolution")}
                     options={VIDEO_RESOLUTION_CHOICES.map((r) => ({ value: r, label: r }))}
-                    value={state.resolution}
+                    value={params.resolution}
                     onChange={(e) => handleChange("resolution", e.target.value)}
                   />
                   <Select
                     label={t("miv.ratio")}
                     options={VIDEO_RATIO_OPTIONS.map((r) => ({ value: r, label: r }))}
-                    value={state.ratio}
+                    value={params.ratio}
                     onChange={(e) => handleChange("ratio", e.target.value as VideoRatio)}
                   />
                 </div>
@@ -253,13 +265,13 @@ export default function MultiImageVideoPage() {
                   <Select
                     label={t("miv.duration")}
                     options={VIDEO_DURATION_CHOICES.map((d) => ({ value: String(d), label: t("common.seconds", { value: d }) }))}
-                    value={String(state.duration)}
+                    value={String(params.duration)}
                     onChange={(e) => handleChange("duration", Number(e.target.value))}
                   />
                   <Select
                     label={t("miv.frameRate")}
                     options={VIDEO_FRAME_RATE_CHOICES.map((f) => ({ value: String(f), label: t("common.framesPerSecond", { value: f }) }))}
-                    value={String(state.frameRate)}
+                    value={String(params.frameRate)}
                     onChange={(e) => handleChange("frameRate", Number(e.target.value))}
                   />
                 </div>
@@ -276,7 +288,7 @@ export default function MultiImageVideoPage() {
                 <Button
                   onClick={handleSubmit}
                   loading={loading}
-                  disabled={!state.prompt.trim() || !state.imageUrls.trim()}
+                  disabled={!prompt.trim() || !params.imageUrls.trim()}
                   className="w-full"
                   size="lg"
                 >
@@ -288,7 +300,7 @@ export default function MultiImageVideoPage() {
           </div>
 
           {/* Right Panel */}
-          <div className="lg:col-span-3 xl:col-span-4">
+          <div className="lg:col-span-7">
             <VideoPlayer
               src={videoUrl}
               progress={progress}

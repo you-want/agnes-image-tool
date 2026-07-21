@@ -4,10 +4,11 @@ import { type InputHTMLAttributes, forwardRef } from "react";
 interface SliderProps extends Omit<InputHTMLAttributes<HTMLInputElement>, "size"> {
   label?: string;
   valueLabel?: string;
+  hint?: string;
 }
 
 const Slider = forwardRef<HTMLInputElement, SliderProps>(function Slider(
-  { className, label, valueLabel, id, ...props },
+  { className, label, valueLabel, hint, id, ...props },
   ref,
 ) {
   const sliderId = id || (typeof label === "string" ? label.toLowerCase().replace(/\s+/g, "-") : "slider");
@@ -46,6 +47,11 @@ const Slider = forwardRef<HTMLInputElement, SliderProps>(function Slider(
         }}
         {...props}
       />
+      {hint && (
+        <p className="text-xs" style={{ color: "var(--text-muted)" }}>
+          {hint}
+        </p>
+      )}
     </div>
   );
 });

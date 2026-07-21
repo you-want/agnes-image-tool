@@ -10,10 +10,11 @@ interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   options: SelectOption[];
   error?: string;
+  hint?: string;
 }
 
 const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { className, label, options, error, id, ...props },
+  { className, label, options, error, hint, id, ...props },
   ref,
 ) {
   const selectId = id || label?.toLowerCase().replace(/\s+/g, "-");
@@ -60,7 +61,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
           </option>
         ))}
       </select>
-      {error && <p className="text-xs text-[var(--error)]">{error}</p>}
+      {error ? <p className="text-xs text-[var(--error)]">{error}</p> : hint && <p className="text-xs" style={{ color: "var(--text-muted)" }}>{hint}</p>}
     </div>
   );
 });

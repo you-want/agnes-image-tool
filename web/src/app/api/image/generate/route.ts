@@ -5,7 +5,7 @@ import { loadServerConfig } from "@/lib/config";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { prompt, size = "1K", ratio = "1:1", n = 1, negative_prompt, extra_body } = body;
+    const { prompt, size = "1K", ratio = "1:1", extra_body } = body;
 
     if (!prompt) return errorResponse("Prompt is required");
 
@@ -16,10 +16,8 @@ export async function POST(request: NextRequest) {
       prompt,
       size,
       ratio,
-      n,
     };
 
-    if (negative_prompt) payload.negative_prompt = negative_prompt;
     if (extra_body) payload.extra_body = extra_body;
 
     const result = await agnesFetch("/v1/images/generations", payload, undefined, serverConfig.baseUrl);

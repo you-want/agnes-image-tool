@@ -33,12 +33,18 @@ export default function ImageGallery({ images, loading = false }: ImageGalleryPr
 
   if (!images.length) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center rounded-xl border border-dashed" style={{
+      <div className="flex flex-col items-center justify-center min-h-[380px] py-16 text-center rounded-xl border border-dashed" style={{
         borderColor: "var(--border)",
         color: "var(--text-muted)",
       }}>
-        <ImageIcon size={40} strokeWidth={1} />
-        <p className="mt-3 text-sm">{t("imageGallery.waiting")}</p>
+        <div className="w-14 h-14 rounded-full flex items-center justify-center mb-4" style={{
+          background: "var(--accent-soft)",
+          color: "var(--accent)",
+        }}>
+          <ImageIcon size={28} strokeWidth={1.5} />
+        </div>
+        <p className="text-sm font-medium" style={{ color: "var(--text-secondary)" }}>{t("imageGallery.waiting")}</p>
+        <p className="mt-1.5 text-xs" style={{ color: "var(--text-muted)" }}>{t("imageGallery.promptHint")}</p>
       </div>
     );
   }

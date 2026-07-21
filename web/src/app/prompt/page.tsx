@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { Sparkles, Copy, Check, Loader2, Image, Clapperboard } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
@@ -9,6 +10,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import PromptEditor from "@/components/prompt/PromptEditor";
 import { useLocale, useTranslations } from "@/hooks/useLocale";
+import { setGlobalPrompt } from "@/lib/prompt-store";
 
 type TaskType = "image" | "video";
 
@@ -56,6 +58,7 @@ const SYSTEM_PROMPT_VIDEO = `You are an expert prompt engineer for AI video gene
 export default function PromptGeneratorPage() {
   const t = useTranslations();
   const { locale } = useLocale();
+  const router = useRouter();
   const [taskType, setTaskType] = useState<TaskType>("image");
   const [subject, setSubject] = useState("");
   const [style, setStyle] = useState("");
@@ -93,9 +96,12 @@ export default function PromptGeneratorPage() {
       if (data.error) throw new Error(data.error);
 
       const content = data.data?.choices?.[0]?.message?.content || "";
+      if (!content.trim()) {
+        throw new Error(t("promptGen.emptyResult"));
+      }
       setResult(content);
     } catch (error) {
-      setResult(`Error: ${error instanceof Error ? error.message : "Unknown error"}`);
+      setResult(`Error: ${error instanceof Error ? error.message : t("promptGen.unknownError")}`);
     } finally {
       setLoading(false);
     }
@@ -130,6 +136,20 @@ export default function PromptGeneratorPage() {
     await navigator.clipboard.writeText(result);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const navigateToImage = () => {
+    if (!result.startsWith("Error:")) {
+      setGlobalPrompt(result);
+      router.push("/text-to-image");
+    }
+  };
+
+  const navigateToVideo = () => {
+    if (!result.startsWith("Error:")) {
+      setGlobalPrompt(result);
+      router.push("/text-to-video");
+    }
   };
 
   return (
@@ -237,6 +257,29 @@ export default function PromptGeneratorPage() {
               }}>
                 {result}
               </pre>
+              {!result.startsWith("Error:") && (
+                <div className="mt-4 pt-4 border-t flex gap-3" style={{ borderColor: "var(--border)" }}>
+                  <p className="text-xs self-center" style={{ color: "var(--text-muted)" }}>
+                    {t("promptGen.nextStep")}
+                  </p>
+                  <button
+                    onClick={navigateToImage}
+                    className="inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-medium transition-colors hover:bg-[var(--accent-soft)]"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    <Image size={14} />
+                    {t("promptGen.goToImage")}
+                  </button>
+                  <button
+                    onClick={navigateToVideo}
+                    className="inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-medium transition-colors hover:bg-[var(--accent-soft)]"
+                    style={{ color: "var(--accent)" }}
+                  >
+                    <Clapperboard size={14} />
+                    {t("promptGen.goToVideo")}
+                  </button>
+                </div>
+              )}
             </Card>
           </motion.div>
         )}

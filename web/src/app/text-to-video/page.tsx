@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Clapperboard, Loader2, Sparkles, Settings2 } from "lucide-react";
+import { Clapperboard, Loader2, Settings2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
@@ -21,10 +21,10 @@ import {
   getVideoDimensions,
 } from "@/lib/constants";
 import { useTranslations } from "@/hooks/useLocale";
+import { usePromptState } from "@/hooks/usePromptState";
+import { addHistoryEntry } from "@/lib/history-store";
 
-interface VideoState {
-  prompt: string;
-  negativePrompt: string;
+interface VideoParams {
   resolution: string;
   ratio: VideoRatio;
   width?: number;
@@ -38,9 +38,8 @@ interface VideoState {
 
 export default function TextToVideoPage() {
   const t = useTranslations();
-  const [state, setState] = useState<VideoState>({
-    prompt: "",
-    negativePrompt: "",
+  const [prompt, setPrompt] = usePromptState("");
+  const [params, setParams] = useState<VideoParams>({
     resolution: "720p",
     ratio: "16:9",
     duration: 5,
@@ -53,16 +52,16 @@ export default function TextToVideoPage() {
   const [loading, setLoading] = useState(false);
   const [advanced, setAdvanced] = useState(false);
 
-  const dims = getVideoDimensions(state.resolution, state.ratio);
-  const maxFrames = getMaxFrames(state.resolution, state.width, state.height);
-  const autoFrames = calculateFrames(state.duration, state.frameRate);
+  const dims = getVideoDimensions(params.resolution, params.ratio);
+  const maxFrames = getMaxFrames(params.resolution, params.width, params.height);
+  const autoFrames = calculateFrames(params.duration, params.frameRate);
 
-  const handleChange = (key: keyof VideoState, value: unknown) => {
-    setState((s) => ({ ...s, [key]: value }));
+  const handleChange = (key: keyof VideoParams, value: unknown) => {
+    setParams((s) => ({ ...s, [key]: value }));
   };
 
   const handleSubmit = async () => {
-    if (!state.prompt.trim()) return;
+    if (!prompt.trim()) return;
 
     setLoading(true);
     setError("");
@@ -72,28 +71,27 @@ export default function TextToVideoPage() {
 
     try {
       const payload: Record<string, unknown> = {
-        prompt: state.prompt,
+        prompt,
         model: "agnes-video-v2.0",
-        frame_rate: state.frameRate,
+        frame_rate: params.frameRate,
       };
 
-      if (dims && !state.width && !state.height) {
+      if (dims && !params.width && !params.height) {
         payload.width = dims.w;
         payload.height = dims.h;
-      } else if (state.width && state.height) {
-        payload.width = state.width;
-        payload.height = state.height;
+      } else if (params.width && params.height) {
+        payload.width = params.width;
+        payload.height = params.height;
       }
 
-      if (state.numFrames) {
-        payload.num_frames = Math.min(state.numFrames, maxFrames);
+      if (params.numFrames) {
+        payload.num_frames = Math.min(params.numFrames, maxFrames);
       } else {
         payload.num_frames = autoFrames;
       }
 
-      if (state.seed !== undefined) payload.seed = state.seed;
-      if (state.steps) payload.num_inference_steps = state.steps;
-      if (state.negativePrompt) payload.negative_prompt = state.negativePrompt;
+      if (params.seed !== undefined) payload.seed = params.seed;
+      if (params.steps) payload.num_inference_steps = params.steps;
 
       const res = await fetch("/api/video/generate", {
         method: "POST",
@@ -117,7 +115,7 @@ export default function TextToVideoPage() {
 
   const pollVideoStatus = async (videoId: string) => {
     let waited = 0;
-    const maxWait = 1800_000; // 30 min
+    const maxWait = 1800_000;
     const interval = 5000;
 
     while (waited < maxWait) {
@@ -142,10 +140,19 @@ export default function TextToVideoPage() {
         setProgress(p);
 
         if (s === "completed") {
-          setVideoUrl(statusData.url || "");
+          const url = statusData.url || "";
+          setVideoUrl(url);
           setLoading(false);
           setStatus("");
           setProgress(100);
+
+          // Record video in history
+          addHistoryEntry({
+            type: "video",
+            sourceRoute: "/text-to-video",
+            prompt,
+            mediaUrl: url,
+          });
           return;
         }
 
@@ -170,47 +177,40 @@ export default function TextToVideoPage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-[1400px] mx-auto"
+        className="container-page"
       >
-        <div className="text-center mb-10">
-          <h1 className="font-display text-3xl font-bold">{t("t2v.title")}</h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+        <div className="text-center lg:text-left mb-6">
+          <h1 className="font-display text-2xl lg:text-3xl font-bold">{t("t2v.title")}</h1>
+          <p className="mt-1.5 text-sm" style={{ color: "var(--text-secondary)" }}>
             {t("t2v.subtitle")}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Panel */}
-          <div className="lg:col-span-2 xl:col-span-3">
-            <Card>
+          <div className="lg:col-span-5">
+            <Card className="lg:sticky lg:top-20">
               <div className="space-y-4">
                 <PromptEditor
                   label={t("t2v.description")}
                   placeholder={t("t2v.descriptionPlaceholder")}
-                  value={state.prompt}
-                  onChange={(e) => handleChange("prompt", e.target.value)}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
                   onOptimize={() => window.location.href = "/optimize"}
                   rows={4}
-                />
-
-                <Input
-                  label={t("t2v.negativePrompt")}
-                  placeholder={t("t2v.negativePlaceholder")}
-                  value={state.negativePrompt}
-                  onChange={(e) => handleChange("negativePrompt", e.target.value)}
                 />
 
                 <div className="grid grid-cols-2 gap-3">
                   <Select
                     label={t("t2v.resolution")}
                     options={VIDEO_RESOLUTION_CHOICES.map((r) => ({ value: r, label: r }))}
-                    value={state.resolution}
+                    value={params.resolution}
                     onChange={(e) => handleChange("resolution", e.target.value)}
                   />
                   <Select
                     label={t("t2v.ratio")}
                     options={VIDEO_RATIO_OPTIONS.map((r) => ({ value: r, label: r }))}
-                    value={state.ratio}
+                    value={params.ratio}
                     onChange={(e) => handleChange("ratio", e.target.value as VideoRatio)}
                   />
                 </div>
@@ -219,19 +219,20 @@ export default function TextToVideoPage() {
                   <Select
                     label={t("t2v.duration")}
                     options={VIDEO_DURATION_CHOICES.map((d) => ({ value: String(d), label: t("common.seconds", { value: d }) }))}
-                    value={String(state.duration)}
+                    value={String(params.duration)}
                     onChange={(e) => handleChange("duration", Number(e.target.value))}
                   />
                   <Select
                     label={t("t2v.frameRate")}
                     options={VIDEO_FRAME_RATE_CHOICES.map((f) => ({ value: String(f), label: t("common.framesPerSecond", { value: f }) }))}
-                    value={String(state.frameRate)}
+                    value={String(params.frameRate)}
                     onChange={(e) => handleChange("frameRate", Number(e.target.value))}
+                    hint={t("t2v.frameRateHint")}
                   />
                 </div>
 
                 <p className="text-xs" style={{ color: "var(--text-muted)" }}>
-                  {t("t2v.estimated", { dims: dims ? `${dims.w}×${dims.h}` : t("field.custom"), frames: String(autoFrames), duration: String(state.duration) })}
+                  {t("t2v.estimated", { dims: dims ? `${dims.w}×${dims.h}` : t("field.custom"), frames: String(autoFrames), duration: String(params.duration) })}
                 </p>
 
                 {/* Advanced */}
@@ -256,6 +257,7 @@ export default function TextToVideoPage() {
                       type="number"
                       placeholder={t("t2v.seedPlaceholder")}
                       onChange={(e) => handleChange("seed", e.target.value ? Number(e.target.value) : undefined)}
+                      hint={t("t2v.seedHint")}
                     />
                     <Slider
                       label={t("t2v.steps")}
@@ -265,18 +267,21 @@ export default function TextToVideoPage() {
                       defaultValue={50}
                       onChange={(e) => handleChange("steps", Number(e.target.value))}
                       valueLabel="50"
+                      hint={t("t2v.stepsHint")}
                     />
                     <Input
                       label={t("t2v.width")}
                       type="number"
                       placeholder={t("t2v.widthPlaceholder")}
                       onChange={(e) => handleChange("width", e.target.value ? Number(e.target.value) : undefined)}
+                      hint={t("t2v.widthHint")}
                     />
                     <Input
                       label={t("t2v.height")}
                       type="number"
                       placeholder={t("t2v.heightPlaceholder")}
                       onChange={(e) => handleChange("height", e.target.value ? Number(e.target.value) : undefined)}
+                      hint={t("t2v.heightHint")}
                     />
                   </motion.div>
                 )}
@@ -293,7 +298,7 @@ export default function TextToVideoPage() {
                 <Button
                   onClick={handleSubmit}
                   loading={loading}
-                  disabled={!state.prompt.trim()}
+                  disabled={!prompt.trim()}
                   className="w-full"
                   size="lg"
                 >
@@ -305,7 +310,7 @@ export default function TextToVideoPage() {
           </div>
 
           {/* Right Panel */}
-          <div className="lg:col-span-3 xl:col-span-4">
+          <div className="lg:col-span-7">
             <VideoPlayer
               src={videoUrl}
               progress={progress}

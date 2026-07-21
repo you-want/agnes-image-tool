@@ -21,9 +21,10 @@ import {
   getVideoDimensions,
 } from "@/lib/constants";
 import { useTranslations } from "@/hooks/useLocale";
+import { usePromptState } from "@/hooks/usePromptState";
+import { addHistoryEntry } from "@/lib/history-store";
 
-interface VideoState {
-  prompt: string;
+interface VideoParams {
   negativePrompt: string;
   resolution: string;
   ratio: VideoRatio;
@@ -38,17 +39,17 @@ interface VideoState {
 
 export default function ImageToVideoPage() {
   const t = useTranslations();
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [state, setState] = useState<VideoState>({
-    prompt: "",
+  const [prompt, setPrompt] = usePromptState("");
+  const [params, setParams] = useState<VideoParams>({
     negativePrompt: "",
     resolution: "720p",
     ratio: "16:9",
     duration: 5,
     frameRate: 24,
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [imageUrl, setImageUrl] = useState("");
   const [videoUrl, setVideoUrl] = useState("");
   const [status, setStatus] = useState("");
   const [progress, setProgress] = useState(0);
@@ -56,6 +57,14 @@ export default function ImageToVideoPage() {
   const [loading, setLoading] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const dims = getVideoDimensions(params.resolution, params.ratio);
+  const maxFrames = getMaxFrames(params.resolution, params.width, params.height);
+  const autoFrames = calculateFrames(params.duration, params.frameRate);
+
+  const handleChange = (key: keyof VideoParams, value: unknown) => {
+    setParams((s) => ({ ...s, [key]: value }));
+  };
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -71,12 +80,8 @@ export default function ImageToVideoPage() {
     setError("");
   };
 
-  const handleChange = (key: keyof VideoState, value: unknown) => {
-    setState((s) => ({ ...s, [key]: value }));
-  };
-
   const handleSubmit = async () => {
-    if (!state.prompt.trim()) return;
+    if (!prompt.trim()) return;
 
     let imageInput = imageUrl.trim();
     if (!imageInput && imageFile) {
@@ -101,34 +106,30 @@ export default function ImageToVideoPage() {
     setProgress(0);
 
     try {
-      const dims = getVideoDimensions(state.resolution, state.ratio);
-      const maxFrames = getMaxFrames(state.resolution, state.width, state.height);
-      const autoFrames = calculateFrames(state.duration, state.frameRate);
-
       const payload: Record<string, unknown> = {
-        prompt: state.prompt,
+        prompt,
         model: "agnes-video-v2.0",
         image: imageInput,
-        frame_rate: state.frameRate,
+        frame_rate: params.frameRate,
       };
 
-      if (dims && !state.width && !state.height) {
+      if (dims && !params.width && !params.height) {
         payload.width = dims.w;
         payload.height = dims.h;
-      } else if (state.width && state.height) {
-        payload.width = state.width;
-        payload.height = state.height;
+      } else if (params.width && params.height) {
+        payload.width = params.width;
+        payload.height = params.height;
       }
 
-      if (state.numFrames) {
-        payload.num_frames = Math.min(state.numFrames, maxFrames);
+      if (params.numFrames) {
+        payload.num_frames = Math.min(params.numFrames, maxFrames);
       } else {
         payload.num_frames = autoFrames;
       }
 
-      if (state.seed !== undefined) payload.seed = state.seed;
-      if (state.steps) payload.num_inference_steps = state.steps;
-      if (state.negativePrompt) payload.negative_prompt = state.negativePrompt;
+      if (params.seed !== undefined) payload.seed = params.seed;
+      if (params.steps) payload.num_inference_steps = params.steps;
+      if (params.negativePrompt) payload.negative_prompt = params.negativePrompt;
 
       const res = await fetch("/api/video/generate", {
         method: "POST",
@@ -177,10 +178,19 @@ export default function ImageToVideoPage() {
         setProgress(p);
 
         if (s === "completed") {
-          setVideoUrl(statusData.url || "");
+          const url = statusData.url || "";
+          setVideoUrl(url);
           setLoading(false);
           setStatus("");
           setProgress(100);
+
+          // Record video in history
+          addHistoryEntry({
+            type: "video",
+            sourceRoute: "/image-to-video",
+            prompt,
+            mediaUrl: url,
+          });
           return;
         }
 
@@ -205,19 +215,19 @@ export default function ImageToVideoPage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-[1400px] mx-auto"
+        className="container-page"
       >
-        <div className="text-center mb-10">
-          <h1 className="font-display text-3xl font-bold">{t("i2v.title")}</h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+        <div className="text-center lg:text-left mb-6">
+          <h1 className="font-display text-2xl lg:text-3xl font-bold">{t("i2v.title")}</h1>
+          <p className="mt-1.5 text-sm" style={{ color: "var(--text-secondary)" }}>
             {t("i2v.subtitle")}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Panel */}
-          <div className="lg:col-span-2 xl:col-span-3">
-            <Card>
+          <div className="lg:col-span-5">
+            <Card className="lg:sticky lg:top-20">
               <div className="space-y-4">
                 {/* Image Input */}
                 <div>
@@ -258,8 +268,8 @@ export default function ImageToVideoPage() {
                 <PromptEditor
                   label={t("i2v.videoDescription")}
                   placeholder={t("i2v.videoPlaceholder")}
-                  value={state.prompt}
-                  onChange={(e) => handleChange("prompt", e.target.value)}
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
                   onOptimize={() => window.location.href = "/optimize"}
                   rows={3}
                 />
@@ -267,7 +277,7 @@ export default function ImageToVideoPage() {
                 <Input
                   label={t("i2v.negativePrompt")}
                   placeholder={t("i2v.negativePlaceholder")}
-                  value={state.negativePrompt}
+                  value={params.negativePrompt}
                   onChange={(e) => handleChange("negativePrompt", e.target.value)}
                 />
 
@@ -275,13 +285,13 @@ export default function ImageToVideoPage() {
                   <Select
                     label={t("i2v.resolution")}
                     options={VIDEO_RESOLUTION_CHOICES.map((r) => ({ value: r, label: r }))}
-                    value={state.resolution}
+                    value={params.resolution}
                     onChange={(e) => handleChange("resolution", e.target.value)}
                   />
                   <Select
                     label={t("i2v.ratio")}
                     options={VIDEO_RATIO_OPTIONS.map((r) => ({ value: r, label: r }))}
-                    value={state.ratio}
+                    value={params.ratio}
                     onChange={(e) => handleChange("ratio", e.target.value as VideoRatio)}
                   />
                 </div>
@@ -290,13 +300,13 @@ export default function ImageToVideoPage() {
                   <Select
                     label={t("i2v.duration")}
                     options={VIDEO_DURATION_CHOICES.map((d) => ({ value: String(d), label: t("common.seconds", { value: d }) }))}
-                    value={String(state.duration)}
+                    value={String(params.duration)}
                     onChange={(e) => handleChange("duration", Number(e.target.value))}
                   />
                   <Select
                     label={t("i2v.frameRate")}
                     options={VIDEO_FRAME_RATE_CHOICES.map((f) => ({ value: String(f), label: t("common.framesPerSecond", { value: f }) }))}
-                    value={String(state.frameRate)}
+                    value={String(params.frameRate)}
                     onChange={(e) => handleChange("frameRate", Number(e.target.value))}
                   />
                 </div>
@@ -359,7 +369,7 @@ export default function ImageToVideoPage() {
                 <Button
                   onClick={handleSubmit}
                   loading={loading}
-                  disabled={!state.prompt.trim()}
+                  disabled={!prompt.trim()}
                   className="w-full"
                   size="lg"
                 >
@@ -371,7 +381,7 @@ export default function ImageToVideoPage() {
           </div>
 
           {/* Right Panel */}
-          <div className="lg:col-span-3 xl:col-span-4">
+          <div className="lg:col-span-7">
             <VideoPlayer
               src={videoUrl}
               progress={progress}

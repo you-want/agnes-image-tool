@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Save, RotateCcw, Check } from "lucide-react";
+import { X, Save, RotateCcw, Check, Loader2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -124,6 +124,11 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                       <>
                         <Check size={16} />
                         {t("settings.saved")}
+                      </>
+                    ) : saving ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        {t("settings.saving")}
                       </>
                     ) : (
                       <>

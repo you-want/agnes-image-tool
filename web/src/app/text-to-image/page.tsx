@@ -2,23 +2,22 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Image, Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
-import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import PromptEditor from "@/components/prompt/PromptEditor";
 import ImageGallery from "@/components/image/ImageGallery";
 import { IMAGE_SIZE_OPTIONS, IMAGE_RATIO_OPTIONS, type ImageSizePreset, type ImageRatio } from "@/lib/constants";
 import { useTranslations } from "@/hooks/useLocale";
+import { usePromptState } from "@/hooks/usePromptState";
+import { addHistoryEntry } from "@/lib/history-store";
 
 export default function TextToImagePage() {
   const t = useTranslations();
-  const [prompt, setPrompt] = useState("");
-  const [negativePrompt, setNegativePrompt] = useState("");
+  const [prompt, setPrompt] = usePromptState("");
   const [size, setSize] = useState<ImageSizePreset>("1K");
   const [ratio, setRatio] = useState<ImageRatio>("1:1");
-  const [count, setCount] = useState(1);
   const [images, setImages] = useState<Array<{ url?: string; b64_json?: string; revised_prompt?: string | null }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -38,8 +37,6 @@ export default function TextToImagePage() {
           prompt,
           size,
           ratio,
-          n: count,
-          negative_prompt: negativePrompt || undefined,
           extra_body: { response_format: "url" },
         }),
       });
@@ -47,7 +44,19 @@ export default function TextToImagePage() {
       const data = await res.json();
       if (data.error) throw new Error(data.error);
 
-      setImages(data.data?.data || []);
+      const generatedImages = data.data?.data || [];
+      setImages(generatedImages);
+
+      // Record each successful image in history
+      for (const img of generatedImages) {
+        addHistoryEntry({
+          type: "image",
+          sourceRoute: "/text-to-image",
+          prompt,
+          mediaUrl: img.url,
+          revisedPrompt: img.revised_prompt || undefined,
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : t("error.generationFailed"));
     } finally {
@@ -60,19 +69,19 @@ export default function TextToImagePage() {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-[1400px] mx-auto"
+        className="container-page"
       >
-        <div className="text-center mb-10">
-          <h1 className="font-display text-3xl font-bold">{t("t2i.title")}</h1>
-          <p className="mt-2 text-sm" style={{ color: "var(--text-secondary)" }}>
+        <div className="text-center lg:text-left mb-6">
+          <h1 className="font-display text-2xl lg:text-3xl font-bold">{t("t2i.title")}</h1>
+          <p className="mt-1.5 text-sm" style={{ color: "var(--text-secondary)" }}>
             {t("t2i.subtitle")}
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left Panel */}
-          <div className="lg:col-span-2 xl:col-span-3">
-            <Card>
+          <div className="lg:col-span-5">
+            <Card className="lg:sticky lg:top-20">
               <div className="space-y-4">
                 <PromptEditor
                   label={t("t2i.prompt")}
@@ -81,13 +90,6 @@ export default function TextToImagePage() {
                   onChange={(e) => setPrompt(e.target.value)}
                   onOptimize={() => window.location.href = "/optimize"}
                   rows={4}
-                />
-
-                <Input
-                  label={t("t2i.negativePrompt")}
-                  placeholder={t("t2i.negativePlaceholder")}
-                  value={negativePrompt}
-                  onChange={(e) => setNegativePrompt(e.target.value)}
                 />
 
                 <div className="grid grid-cols-2 gap-3">
@@ -104,15 +106,6 @@ export default function TextToImagePage() {
                     onChange={(e) => setRatio(e.target.value as ImageRatio)}
                   />
                 </div>
-
-                <Input
-                  label={t("t2i.count")}
-                  type="number"
-                  min={1}
-                  max={4}
-                  value={String(count)}
-                  onChange={(e) => setCount(Math.min(4, Math.max(1, Number(e.target.value))))}
-                />
 
                 {error && (
                   <div className="rounded-lg px-3 py-2 text-sm" style={{
@@ -139,7 +132,7 @@ export default function TextToImagePage() {
           </div>
 
           {/* Right Panel */}
-          <div className="lg:col-span-3 xl:col-span-4">
+          <div className="lg:col-span-7">
             <ImageGallery images={images} loading={loading} />
           </div>
         </div>

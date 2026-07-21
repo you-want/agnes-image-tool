@@ -54,10 +54,7 @@ export interface ImageGenerationRequest {
   prompt: string;
   size: string;
   ratio?: string;
-  n?: number;
-  negative_prompt?: string;
-  image?: string[]; // Data URI or URL for img2img
-  strength?: number;
+  image?: string[];
   return_base64?: boolean;
 }
 
@@ -144,7 +141,7 @@ export type VideoRatio = (typeof VIDEO_RATIO_OPTIONS)[number];
 
 export const VIDEO_RESOLUTION_PRESETS = {
   "480p": { "16:9": { w: 854, h: 480 }, "9:16": { w: 480, h: 854 }, "1:1": { w: 480, h: 480 }, "4:3": { w: 640, h: 480 }, "3:4": { w: 480, h: 640 } },
-  "720p": { "16:9": { w: 1280, h: 720 }, "9:16": { w: 720, h: 1280 }, "1:1": { w: 720, h: 720 }, "4:3": { w: 960, h: 720 }, "3:4": { w: 720, h: 960 } },
+  "720p": { "16:9": { w: 1152, h: 768 }, "9:16": { w: 768, h: 1152 }, "1:1": { w: 768, h: 768 }, "4:3": { w: 1024, h: 768 }, "3:4": { w: 768, h: 1024 } },
   "1080p": { "16:9": { w: 1920, h: 1080 }, "9:16": { w: 1080, h: 1920 }, "1:1": { w: 1080, h: 1080 }, "4:3": { w: 1440, h: 1080 }, "3:4": { w: 1080, h: 1440 } },
 } as const;
 
@@ -161,13 +158,7 @@ export function calculateFrames(duration: number, fps: number): number {
 }
 
 export function getMaxFrames(resolution: string, width?: number, height?: number): number {
-  if (width && height) {
-    const maxDim = Math.max(width, height);
-    if (maxDim >= 1920) return 169;
-    if (maxDim >= 1280) return 409;
-    return 961;
-  }
-  return resolution === "1080p" ? 169 : resolution === "720p" ? 409 : 961;
+  return 441;
 }
 
 export function getVideoDimensions(resolution: string, ratio: VideoRatio) {
