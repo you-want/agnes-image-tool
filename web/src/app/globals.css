@@ -179,3 +179,20 @@ body {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* ===== Skeleton Shimmer ===== */
+.skeleton-loading {
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-card-hover) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
