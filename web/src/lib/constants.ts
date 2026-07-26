@@ -157,7 +157,12 @@ export function calculateFrames(duration: number, fps: number): number {
   return Math.min(Math.max(8 * n + 1, 9), 441);
 }
 
-export function getMaxFrames(resolution: string, width?: number, height?: number): number {
+/**
+ * Upper bound on frames the video model accepts. Currently a flat cap, but the
+ * signature keeps the resolution/dimensions so callers don't change if the
+ * limit ever becomes resolution-dependent.
+ */
+export function getMaxFrames(_resolution: string, _width?: number, _height?: number): number {
   return 441;
 }
 

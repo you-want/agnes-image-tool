@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   Sparkles, WandSparkles, Image, Images, Clapperboard, Film, GalleryHorizontal, ArrowRight,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useTranslations } from "@/hooks/useLocale";
 
 const features = [

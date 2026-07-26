@@ -143,6 +143,7 @@
     "subtitle": "Upload a reference image and transform its style or edit it with prompts",
     "referenceImage": "Reference Image",
     "uploadClick": "Click to upload image",
+    "dragDropHint": "Or drag and drop here",
     "maxSize": "Max 10MB",
     "styleDesc": "Style Description",
     "stylePlaceholder": "e.g., Oil painting style, impressionism, warm tones",
@@ -239,6 +240,8 @@
     "apiKey": "API Key",
     "apiKeyPlaceholder": "Enter your API Key",
     "apiKeyHint": "Used to call Agnes AI API",
+    "apiKeyConfiguredHint": "A key is already saved. Leave blank to keep it unchanged.",
+    "apiKeyConfiguredPlaceholder": "•••••••••• (saved)",
     "baseUrl": "Base URL",
     "baseUrlPlaceholder": "https://apihub.agnes-ai.com",
     "baseUrlHint": "API server address",
@@ -247,6 +250,21 @@
     "saved": "Saved",
     "reset": "Reset",
     "close": "Close"
+  },
+  "offline": {
+    "title": "You're Offline",
+    "description": "Check your internet connection and try again.",
+    "retry": "Retry",
+    "goHome": "Go Home",
+    "goOnline": "Go Online",
+    "features": "Available features while offline:",
+    "feature1": "View previously generated images",
+    "feature2": "Access your prompt history",
+    "feature3": "Adjust settings and preferences",
+    "galleryTitle": "Your Offline Gallery",
+    "galleryDescription": "These are your recently generated images available offline.",
+    "emptyTitle": "No Cached Images",
+    "emptyDescription": "You don't have any previously generated images available offline."
   },
   "history": {
     "title": "Generation History",
@@ -288,7 +306,8 @@
     "videoTimeout": "Video generation timed out (exceeded 30 minutes)",
     "readImage": "Failed to read uploaded image",
     "uploadRequired": "Please upload an image or enter an image URL",
-    "imageTooLarge": "Image size cannot exceed 10MB"
+    "imageTooLarge": "Image size cannot exceed 10MB",
+    "offline": "You're offline. Please check your connection."
   },
   "videoPlayer": {
     "waiting": "Waiting to generate...",
@@ -302,7 +321,10 @@
     "waiting": "Waiting to generate...",
     "promptHint": "Enter a prompt and click generate",
     "preview": "Image Preview",
-    "download": "Download Image"
+    "download": "Download Image",
+    "revised": "Revised",
+    "revisedPrompt": "Revised Prompt",
+    "copyRevisedPrompt": "Copy revised prompt"
   },
   "field": {
     "custom": "Custom"
@@ -310,5 +332,16 @@
   "locale": {
     "zh-CN": "中文",
     "en": "English"
+  },
+  "pwa": {
+    "offlineTitle": "You're offline",
+    "offlineDesc": "Some features may be limited",
+    "installTitle": "Install Agnes Forge?",
+    "installDesc": "Install for the best experience",
+    "installLater": "Maybe Later",
+    "install": "Install",
+    "updateTitle": "Update available",
+    "updateDesc": "New features and improvements",
+    "update": "Update"
   }
 }

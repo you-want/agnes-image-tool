@@ -13,14 +13,10 @@ export interface HistoryEntry {
 const HISTORY_STORAGE_KEY = "agnes_history_entries";
 const MAX_ENTRIES_PER_TYPE = 50;
 
-function getStorageKey(): string {
-  return HISTORY_STORAGE_KEY;
-}
-
 function loadAll(): HistoryEntry[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(getStorageKey());
+    const raw = localStorage.getItem(HISTORY_STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
@@ -33,16 +29,16 @@ function loadAll(): HistoryEntry[] {
 function saveAll(entries: HistoryEntry[]): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(getStorageKey(), JSON.stringify(entries));
+    localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(entries));
   } catch {
     // Storage full — try trimming oldest entries
     const trimmed = trimEntries(entries);
     try {
-      localStorage.setItem(getStorageKey(), JSON.stringify(trimmed));
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(trimmed));
     } catch {
       // Still full — clear all
       try {
-        localStorage.removeItem(getStorageKey());
+        localStorage.removeItem(HISTORY_STORAGE_KEY);
       } catch {}
     }
   }
@@ -57,7 +53,7 @@ function trimEntries(entries: HistoryEntry[]): HistoryEntry[] {
   }
 
   const trimmed: HistoryEntry[] = [];
-  for (const [type, typeEntries] of byType) {
+  for (const typeEntries of byType.values()) {
     typeEntries.sort((a, b) => b.createdAt - a.createdAt);
     trimmed.push(...typeEntries.slice(0, MAX_ENTRIES_PER_TYPE));
   }
@@ -98,6 +94,6 @@ export function getHistoryByType(type: HistoryType): HistoryEntry[] {
 export function clearHistory(): void {
   if (typeof window === "undefined") return;
   try {
-    localStorage.removeItem(getStorageKey());
+    localStorage.removeItem(HISTORY_STORAGE_KEY);
   } catch {}
 }

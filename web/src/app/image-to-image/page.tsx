@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useRef, ChangeEvent } from "react";
+import { useState, useRef, ChangeEvent, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Upload, Loader2, Sparkles } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
+import ErrorBanner from "@/components/ui/ErrorBanner";
 import PromptEditor from "@/components/prompt/PromptEditor";
 import ImageGallery from "@/components/image/ImageGallery";
 import { IMAGE_SIZE_OPTIONS, IMAGE_RATIO_OPTIONS, type ImageSizePreset, type ImageRatio } from "@/lib/constants";
@@ -15,6 +17,7 @@ import { addHistoryEntry } from "@/lib/history-store";
 
 export default function ImageToImagePage() {
   const t = useTranslations();
+  const router = useRouter();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [prompt, setPrompt] = usePromptState("");
@@ -23,11 +26,14 @@ export default function ImageToImagePage() {
   const [images, setImages] = useState<Array<{ url?: string; b64_json?: string; revised_prompt?: string | null }>>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const processFile = useCallback((file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setError(t("error.uploadRequired"));
+      return;
+    }
 
     if (file.size > 10 * 1024 * 1024) {
       setError(t("error.imageTooLarge"));
@@ -41,7 +47,41 @@ export default function ImageToImagePage() {
     };
     reader.readAsDataURL(file);
     setError("");
+  }, [t]);
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    processFile(file);
   };
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      processFile(files[0]);
+    }
+  }, [processFile]);
 
   const handleGenerate = async () => {
     if (!imageFile) return;
@@ -115,8 +155,12 @@ export default function ImageToImagePage() {
                   </label>
                   <div
                     onClick={() => fileRef.current?.click()}
+                    onDragEnter={handleDragEnter}
+                    onDragLeave={handleDragLeave}
+                    onDragOver={handleDragOver}
+                    onDrop={handleDrop}
                     className="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 cursor-pointer transition-all hover:border-[var(--accent)] hover:bg-[var(--accent-soft)]"
-                    style={{ borderColor: "var(--border)" }}
+                    style={{ borderColor: isDragging ? "var(--accent)" : "var(--border)" }}
                   >
                     <input
                       ref={fileRef}
@@ -126,11 +170,13 @@ export default function ImageToImagePage() {
                       className="hidden"
                     />
                     {imagePreview ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img src={imagePreview} alt={t("common.preview")} className="max-h-40 rounded-lg object-contain" />
                     ) : (
                       <>
                         <Upload size={28} strokeWidth={1.5} style={{ color: "var(--text-muted)" }} />
                         <p className="mt-2 text-sm" style={{ color: "var(--text-muted)" }}>{t("i2i.uploadClick")}</p>
+                        <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>{t("i2i.dragDropHint")}</p>
                         <p className="mt-1 text-xs" style={{ color: "var(--text-muted)" }}>{t("i2i.maxSize")}</p>
                       </>
                     )}
@@ -142,7 +188,7 @@ export default function ImageToImagePage() {
                   placeholder={t("i2i.stylePlaceholder")}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  onOptimize={() => window.location.href = "/optimize"}
+                  onOptimize={() => router.push("/optimize")}
                   rows={3}
                 />
 
@@ -161,14 +207,7 @@ export default function ImageToImagePage() {
                   />
                 </div>
 
-                {error && (
-                  <div className="rounded-lg px-3 py-2 text-sm" style={{
-                    background: "var(--error-soft)",
-                    color: "var(--error)",
-                  }}>
-                    {error}
-                  </div>
-                )}
+                <ErrorBanner message={error} />
 
                 <Button
                   onClick={handleGenerate}

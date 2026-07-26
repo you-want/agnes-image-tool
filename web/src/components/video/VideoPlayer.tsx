@@ -1,8 +1,7 @@
 "use client";
 
-import { useRef, useEffect } from "react";
-import { Play, Pause, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { useRef } from "react";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "@/hooks/useLocale";
 
 interface VideoPlayerProps {

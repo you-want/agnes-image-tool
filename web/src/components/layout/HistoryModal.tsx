@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, X, Image, Clapperboard, Download, Trash2 } from "lucide-react";
+import { Clock, X, Image as ImageIcon, Clapperboard, Download, Trash2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import { useTranslations } from "@/hooks/useLocale";
@@ -23,9 +23,14 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
     setEntries(all);
   };
 
-  if (isOpen) {
-    loadEntries();
-  }
+  // Refresh the list each time the modal opens. Doing this during render (as
+  // before) sets state on every render pass and never settles.
+  useEffect(() => {
+    if (isOpen) {
+      loadEntries();
+      setDeletingId(null);
+    }
+  }, [isOpen]);
 
   const handleDelete = (id: string) => {
     setDeletingId(id);
@@ -60,7 +65,7 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
   };
 
   const getTypeIcon = (type: "image" | "video") => {
-    return type === "image" ? <Image size={14} /> : <Clapperboard size={14} />;
+    return type === "image" ? <ImageIcon size={14} /> : <Clapperboard size={14} />;
   };
 
   const getTypeLabel = (type: "image" | "video") => {
@@ -130,6 +135,9 @@ export default function HistoryModal({ isOpen, onClose }: HistoryModalProps) {
                       {/* Thumbnail */}
                       <div className="flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden bg-black/10">
                         {entry.type === "image" && entry.mediaUrl ? (
+                          // Small remote thumbnail; next/image optimization isn't
+                          // worth the layout constraints here.
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={entry.mediaUrl}
                             alt={entry.prompt}

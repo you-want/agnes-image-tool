@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { WandSparkles, Copy, Check, Loader2 } from "lucide-react";
+import { WandSparkles, Loader2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import PromptEditor from "@/components/prompt/PromptEditor";
@@ -28,13 +28,11 @@ export default function OptimizePage() {
   const [original, setOriginal] = useState("");
   const [optimized, setOptimized] = useState("");
   const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
 
   const handleOptimize = async () => {
     if (!original.trim()) return;
 
     setLoading(true);
-    setCopied(false);
 
     try {
       const res = await fetch("/api/chat", {
@@ -66,8 +64,6 @@ export default function OptimizePage() {
   const handleCopy = async () => {
     if (!optimized) return;
     await navigator.clipboard.writeText(optimized);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (

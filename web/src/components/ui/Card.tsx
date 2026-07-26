@@ -13,7 +13,8 @@ const Card = forwardRef<HTMLDivElement, CardProps>(function Card(
     <div
       ref={ref}
       className={cn(
-        "rounded-xl border p-6",
+        "rounded-xl border",
+        padded && "p-6",
         "transition-all duration-200",
         className,
       )}

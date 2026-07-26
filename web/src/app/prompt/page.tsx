@@ -3,12 +3,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { Sparkles, Copy, Check, Loader2, Image, Clapperboard } from "lucide-react";
+import { Sparkles, Copy, Check, Loader2, Image as ImageIcon, Clapperboard } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
-import PromptEditor from "@/components/prompt/PromptEditor";
 import { useLocale, useTranslations } from "@/hooks/useLocale";
 import { setGlobalPrompt } from "@/lib/prompt-store";
 
@@ -181,7 +180,7 @@ export default function PromptGeneratorPage() {
                   color: taskType === task ? "var(--text-primary)" : "var(--text-muted)",
                 }}
               >
-                {task === "image" ? <Image size={16} /> : <Clapperboard size={16} />}
+                {task === "image" ? <ImageIcon size={16} /> : <Clapperboard size={16} />}
                 {task === "image" ? t("promptGen.task.image") : t("promptGen.task.video")}
               </button>
             ))}
@@ -267,7 +266,7 @@ export default function PromptGeneratorPage() {
                     className="inline-flex items-center gap-1.5 rounded-md px-4 py-2 text-xs font-medium transition-colors hover:bg-[var(--accent-soft)]"
                     style={{ color: "var(--accent)" }}
                   >
-                    <Image size={14} />
+                    <ImageIcon size={14} />
                     {t("promptGen.goToImage")}
                   </button>
                   <button

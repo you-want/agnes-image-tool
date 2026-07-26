@@ -1,31 +1,58 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
-import { Download, ZoomIn } from "lucide-react";
+import { Download, ZoomIn, Trash2, Copy, Check, Info } from "lucide-react";
 import Modal from "@/components/ui/Modal";
+import LazyImage from "@/components/ui/LazyImage";
+import Skeleton from "@/components/ui/Skeleton";
 import { useTranslations } from "@/hooks/useLocale";
 
 interface ImageGalleryProps {
   images: Array<{ url?: string; b64_json?: string; revised_prompt?: string | null }>;
   loading?: boolean;
+  editable?: boolean;
+  onDeleteImage?: (index: number) => void;
+  showRevisedPrompt?: boolean;
 }
 
 function dataUrlFromB64(b64: string): string {
   return `data:image/png;base64,${b64}`;
 }
 
-export default function ImageGallery({ images, loading = false }: ImageGalleryProps) {
+export default function ImageGallery({
+  images,
+  loading = false,
+  editable = false,
+  onDeleteImage,
+  showRevisedPrompt = true
+}: ImageGalleryProps) {
   const t = useTranslations();
   const [selected, setSelected] = useState<number | null>(null);
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+
+  const handleDelete = (index: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDeleteImage?.(index);
+  };
+
+  const copyToClipboard = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 1500);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {[1, 2].map((i) => (
-          <div key={i} className="aspect-square rounded-xl animate-pulse" style={{
-            background: "var(--bg-secondary)",
-          }} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="aspect-square">
+            <Skeleton className="h-full w-full" />
+          </div>
         ))}
       </div>
     );
@@ -51,26 +78,55 @@ export default function ImageGallery({ images, loading = false }: ImageGalleryPr
 
   return (
     <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {images.map((img, i) => {
           const src = img.url || (img.b64_json ? dataUrlFromB64(img.b64_json) : null);
           if (!src) return null;
+
           return (
             <div
               key={i}
               className="group relative aspect-square overflow-hidden rounded-xl border cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-0.5"
               style={{ borderColor: "var(--border)" }}
               onClick={() => setSelected(i)}
+              onMouseEnter={() => setHoveredIndex(i)}
+              onMouseLeave={() => setHoveredIndex(null)}
             >
-              <Image
-                src={src}
-                alt={t("imageGallery.preview")}
-                fill
-                className="object-contain"
-                unoptimized={src.startsWith("data:")}
-              />
+              {/* Lazy loaded image */}
+              {img.url ? (
+                <LazyImage
+                  src={src}
+                  alt={t("imageGallery.preview")}
+                  fill
+                  className="object-contain"
+                  unoptimized={false}
+                />
+              ) : img.b64_json ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={src}
+                  alt={t("imageGallery.preview")}
+                  className="w-full h-full object-contain"
+                />
+              ) : null}
+
+              {/* Revised prompt badge */}
+              {img.revised_prompt && showRevisedPrompt && (
+                <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1">
+                  <Info size={12} />
+                  {t("imageGallery.revised")}
+                </div>
+              )}
+
+              {/* Image number */}
+              <div className="absolute top-2 right-2 bg-black/70 text-white text-xs w-6 h-6 rounded-full flex items-center justify-center">
+                {i + 1}
+              </div>
+
               {/* Overlay */}
-              <div className="absolute inset-0 flex items-center justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <div className={`absolute inset-0 flex items-end justify-between p-3 transition-opacity duration-200 ${
+                hoveredIndex === i || selected === i ? 'opacity-100 bg-gradient-to-t from-black/70' : 'opacity-0'
+              }`}>
                 <div className="flex gap-2">
                   <a
                     href={src}
@@ -78,14 +134,14 @@ export default function ImageGallery({ images, loading = false }: ImageGalleryPr
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={t("common.download")}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur-sm transition-transform hover:scale-110"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white transition-transform hover:scale-110"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <Download size={16} />
                   </a>
                   <button
                     aria-label={t("common.zoomIn")}
-                    className="flex h-9 w-9 items-center justify-center rounded-full bg-black/70 text-white backdrop-blur-sm transition-transform hover:scale-110"
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white transition-transform hover:scale-110"
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelected(i);
@@ -93,7 +149,33 @@ export default function ImageGallery({ images, loading = false }: ImageGalleryPr
                   >
                     <ZoomIn size={16} />
                   </button>
+                  {img.revised_prompt && (
+                    <button
+                      aria-label={
+                        copiedIndex === i
+                          ? t("common.copied")
+                          : t("imageGallery.copyRevisedPrompt")
+                      }
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white transition-transform hover:scale-110"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(img.revised_prompt!, i);
+                      }}
+                    >
+                      {copiedIndex === i ? <Check size={16} /> : <Copy size={16} />}
+                    </button>
+                  )}
                 </div>
+
+                {editable && (
+                  <button
+                    aria-label={t("common.delete")}
+                    className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20 backdrop-blur-sm text-white transition-transform hover:scale-110"
+                    onClick={(e) => handleDelete(i, e)}
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -109,12 +191,21 @@ export default function ImageGallery({ images, loading = false }: ImageGalleryPr
       >
         {selected !== null && images[selected]?.url && (
           <div className="relative aspect-video overflow-hidden rounded-xl">
-            <Image
-              src={images[selected].url}
+            <LazyImage
+              src={images[selected].url!}
               alt={t("imageGallery.preview")}
               fill
               className="object-contain"
             />
+            {images[selected]?.revised_prompt && showRevisedPrompt && (
+              <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white p-4">
+                <div className="flex items-center gap-2 text-sm mb-1">
+                  <Info size={16} />
+                  <span>{t("imageGallery.revisedPrompt")}</span>
+                </div>
+                <p className="text-xs opacity-90">{images[selected].revised_prompt}</p>
+              </div>
+            )}
           </div>
         )}
       </Modal>

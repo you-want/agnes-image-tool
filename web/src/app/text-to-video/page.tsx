@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Clapperboard, Loader2, Settings2 } from "lucide-react";
 import Card from "@/components/ui/Card";
@@ -8,6 +9,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Slider from "@/components/ui/Slider";
+import ErrorBanner from "@/components/ui/ErrorBanner";
 import PromptEditor from "@/components/prompt/PromptEditor";
 import VideoPlayer from "@/components/video/VideoPlayer";
 import {
@@ -22,6 +24,7 @@ import {
 } from "@/lib/constants";
 import { useTranslations } from "@/hooks/useLocale";
 import { usePromptState } from "@/hooks/usePromptState";
+import { useVideoPolling } from "@/hooks/useVideoPolling";
 import { addHistoryEntry } from "@/lib/history-store";
 
 interface VideoParams {
@@ -38,6 +41,7 @@ interface VideoParams {
 
 export default function TextToVideoPage() {
   const t = useTranslations();
+  const router = useRouter();
   const [prompt, setPrompt] = usePromptState("");
   const [params, setParams] = useState<VideoParams>({
     resolution: "720p",
@@ -45,12 +49,18 @@ export default function TextToVideoPage() {
     duration: 5,
     frameRate: 24,
   });
-  const [videoUrl, setVideoUrl] = useState("");
-  const [status, setStatus] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [advanced, setAdvanced] = useState(false);
+
+  const {
+    videoUrl,
+    status,
+    progress,
+    error,
+    loading,
+    begin,
+    fail,
+    start,
+  } = useVideoPolling();
 
   const dims = getVideoDimensions(params.resolution, params.ratio);
   const maxFrames = getMaxFrames(params.resolution, params.width, params.height);
@@ -63,16 +73,11 @@ export default function TextToVideoPage() {
   const handleSubmit = async () => {
     if (!prompt.trim()) return;
 
-    setLoading(true);
-    setError("");
-    setVideoUrl("");
-    setStatus("queued");
-    setProgress(0);
+    begin();
 
     try {
       const payload: Record<string, unknown> = {
         prompt,
-        model: "agnes-video-v2.0",
         frame_rate: params.frameRate,
       };
 
@@ -105,71 +110,21 @@ export default function TextToVideoPage() {
       const videoId = data.data?.video_id || data.data?.id || data.data?.task_id;
       if (!videoId) throw new Error(t("error.noVideoTaskId"));
 
-      pollVideoStatus(videoId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("error.generationFailed"));
-      setStatus("failed");
-      setLoading(false);
-    }
-  };
-
-  const pollVideoStatus = async (videoId: string) => {
-    let waited = 0;
-    const maxWait = 1800_000;
-    const interval = 5000;
-
-    while (waited < maxWait) {
-      await new Promise((r) => setTimeout(r, interval));
-      waited += interval;
-
-      try {
-        const res = await fetch(`/api/video/status/${encodeURIComponent(videoId)}`);
-        const data = await res.json();
-
-        if (data.error) {
-          setStatus("failed");
-          setError(data.error);
-          return;
-        }
-
-        const statusData = data.data;
-        const s = statusData.status;
-        const p = statusData.progress || 0;
-
-        setStatus(s);
-        setProgress(p);
-
-        if (s === "completed") {
-          const url = statusData.url || "";
-          setVideoUrl(url);
-          setLoading(false);
-          setStatus("");
-          setProgress(100);
-
-          // Record video in history
+      await start(videoId, {
+        timeoutMessage: t("error.videoTimeout"),
+        failedMessage: t("error.generationFailed"),
+        onComplete: (url) => {
           addHistoryEntry({
             type: "video",
             sourceRoute: "/text-to-video",
             prompt,
             mediaUrl: url,
           });
-          return;
-        }
-
-        if (s === "failed") {
-          setError(statusData.error?.message || t("error.generationFailed"));
-          setStatus("failed");
-          setLoading(false);
-          return;
-        }
-      } catch (err) {
-        console.error("Poll error:", err);
-      }
+        },
+      });
+    } catch (err) {
+      fail(err instanceof Error ? err.message : t("error.generationFailed"));
     }
-
-    setError(t("error.videoTimeout"));
-    setStatus("failed");
-    setLoading(false);
   };
 
   return (
@@ -196,7 +151,7 @@ export default function TextToVideoPage() {
                   placeholder={t("t2v.descriptionPlaceholder")}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  onOptimize={() => window.location.href = "/optimize"}
+                  onOptimize={() => router.push("/optimize")}
                   rows={4}
                 />
 
@@ -286,14 +241,7 @@ export default function TextToVideoPage() {
                   </motion.div>
                 )}
 
-                {error && (
-                  <div className="rounded-lg px-3 py-2 text-sm" style={{
-                    background: "var(--error-soft)",
-                    color: "var(--error)",
-                  }}>
-                    {error}
-                  </div>
-                )}
+                <ErrorBanner message={error} />
 
                 <Button
                   onClick={handleSubmit}

@@ -143,6 +143,7 @@
     "subtitle": "上传参考图片，通过提示词进行风格转换和编辑",
     "referenceImage": "参考图片",
     "uploadClick": "点击上传图片",
+    "dragDropHint": "或拖放图片到此处",
     "maxSize": "最大 10MB",
     "styleDesc": "风格描述",
     "stylePlaceholder": "例如：油画风格，印象派，温暖色调",
@@ -239,6 +240,8 @@
     "apiKey": "API Key",
     "apiKeyPlaceholder": "输入你的 API Key",
     "apiKeyHint": "用于调用 Agnes AI API",
+    "apiKeyConfiguredHint": "已保存密钥,留空则保持不变。",
+    "apiKeyConfiguredPlaceholder": "•••••••••• (已保存)",
     "baseUrl": "Base URL",
     "baseUrlPlaceholder": "https://apihub.agnes-ai.com",
     "baseUrlHint": "API 服务器地址",
@@ -288,7 +291,23 @@
     "videoTimeout": "视频生成超时（超过 30 分钟）",
     "readImage": "无法读取上传的图片",
     "uploadRequired": "请上传图片或输入图片 URL",
-    "imageTooLarge": "图片大小不能超过 10MB"
+    "imageTooLarge": "图片大小不能超过 10MB",
+    "offline": "你已离线,请检查网络连接。"
+  },
+  "offline": {
+    "title": "您已离线",
+    "description": "请检查您的网络连接并重试。",
+    "retry": "重试",
+    "goHome": "返回首页",
+    "goOnline": "连接网络",
+    "features": "离线时可用的功能：",
+    "feature1": "查看之前生成的图片",
+    "feature2": "访问提示词历史",
+    "feature3": "调整设置和偏好",
+    "galleryTitle": "您的离线图库",
+    "galleryDescription": "这些是您最近生成的图片，可在离线时查看。",
+    "emptyTitle": "暂无缓存图片",
+    "emptyDescription": "你还没有可离线查看的历史生成图片。"
   },
   "videoPlayer": {
     "waiting": "等待生成...",
@@ -302,7 +321,10 @@
     "waiting": "等待生成...",
     "promptHint": "输入提示词后点击生成按钮",
     "preview": "图片预览",
-    "download": "下载图片"
+    "download": "下载图片",
+    "revised": "已优化",
+    "revisedPrompt": "优化后的提示词",
+    "copyRevisedPrompt": "复制优化后的提示词"
   },
   "field": {
     "custom": "自定义"
@@ -310,5 +332,16 @@
   "locale": {
     "zh-CN": "中文",
     "en": "English"
+  },
+  "pwa": {
+    "offlineTitle": "你已离线",
+    "offlineDesc": "部分功能可能受限",
+    "installTitle": "安装 Agnes Forge?",
+    "installDesc": "安装以获得最佳体验",
+    "installLater": "稍后再说",
+    "install": "安装",
+    "updateTitle": "有可用更新",
+    "updateDesc": "新功能与改进",
+    "update": "更新"
   }
 }

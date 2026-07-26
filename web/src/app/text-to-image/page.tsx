@@ -1,20 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Loader2, Sparkles } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Select from "@/components/ui/Select";
+import ErrorBanner from "@/components/ui/ErrorBanner";
 import PromptEditor from "@/components/prompt/PromptEditor";
 import ImageGallery from "@/components/image/ImageGallery";
 import { IMAGE_SIZE_OPTIONS, IMAGE_RATIO_OPTIONS, type ImageSizePreset, type ImageRatio } from "@/lib/constants";
 import { useTranslations } from "@/hooks/useLocale";
 import { usePromptState } from "@/hooks/usePromptState";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { addHistoryEntry } from "@/lib/history-store";
+import { apiPost } from "@/lib/fetch-with-offline";
+
+interface GeneratedImage {
+  url?: string;
+  b64_json?: string;
+  revised_prompt?: string | null;
+}
+
+/** Shape of /api/image/generate: successResponse wraps the Agnes payload in `data`. */
+interface GenerateImageResponse {
+  error?: string;
+  data?: { data?: GeneratedImage[] };
+}
 
 export default function TextToImagePage() {
   const t = useTranslations();
+  const router = useRouter();
   const [prompt, setPrompt] = usePromptState("");
   const [size, setSize] = useState<ImageSizePreset>("1K");
   const [ratio, setRatio] = useState<ImageRatio>("1:1");
@@ -22,7 +39,7 @@ export default function TextToImagePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleGenerate = async () => {
+  const handleGenerate = useCallback(async () => {
     if (!prompt.trim()) return;
 
     setLoading(true);
@@ -30,18 +47,12 @@ export default function TextToImagePage() {
     setImages([]);
 
     try {
-      const res = await fetch("/api/image/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt,
-          size,
-          ratio,
-          extra_body: { response_format: "url" },
-        }),
+      const data = await apiPost<GenerateImageResponse>("/api/image/generate", {
+        prompt,
+        size,
+        ratio,
+        extra_body: { response_format: "url" },
       });
-
-      const data = await res.json();
       if (data.error) throw new Error(data.error);
 
       const generatedImages = data.data?.data || [];
@@ -58,11 +69,39 @@ export default function TextToImagePage() {
         });
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("error.generationFailed"));
+      if (err instanceof Error && err.message.includes("offline")) {
+        setError(t("error.offline"));
+      } else {
+        setError(err instanceof Error ? err.message : t("error.generationFailed"));
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [prompt, size, ratio, t]);
+
+  const handleDeleteImage = useCallback((index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    shortcuts: [
+      {
+        key: "enter",
+        ctrlKey: true,
+        metaKey: true,
+        preventDefault: true,
+        callback: () => { if (!loading && prompt.trim()) handleGenerate(); },
+      },
+      {
+        key: "enter",
+        shiftKey: true,
+        preventDefault: true,
+        callback: () => { if (!loading && prompt.trim()) handleGenerate(); },
+      },
+    ],
+    enabled: true,
+  });
 
   return (
     <div className="py-8">
@@ -88,7 +127,7 @@ export default function TextToImagePage() {
                   placeholder={t("t2i.promptPlaceholder")}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  onOptimize={() => window.location.href = "/optimize"}
+                  onOptimize={() => router.push("/optimize")}
                   rows={4}
                 />
 
@@ -107,15 +146,7 @@ export default function TextToImagePage() {
                   />
                 </div>
 
-                {error && (
-                  <div className="rounded-lg px-3 py-2 text-sm" style={{
-                    background: "var(--error-soft)",
-                    color: "var(--error)",
-                    borderColor: "var(--error)",
-                  }}>
-                    {error}
-                  </div>
-                )}
+                <ErrorBanner message={error} />
 
                 <Button
                   onClick={handleGenerate}
@@ -133,7 +164,13 @@ export default function TextToImagePage() {
 
           {/* Right Panel */}
           <div className="lg:col-span-7">
-            <ImageGallery images={images} loading={loading} />
+            <ImageGallery
+              images={images}
+              loading={loading}
+              editable={true}
+              onDeleteImage={handleDeleteImage}
+              showRevisedPrompt={true}
+            />
           </div>
         </div>
       </motion.div>

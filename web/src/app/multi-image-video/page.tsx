@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { GalleryHorizontal, Loader2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
+import ErrorBanner from "@/components/ui/ErrorBanner";
 import PromptEditor from "@/components/prompt/PromptEditor";
 import VideoPlayer from "@/components/video/VideoPlayer";
 import {
@@ -21,6 +23,7 @@ import {
 } from "@/lib/constants";
 import { useTranslations } from "@/hooks/useLocale";
 import { usePromptState } from "@/hooks/usePromptState";
+import { useVideoPolling } from "@/hooks/useVideoPolling";
 import { addHistoryEntry } from "@/lib/history-store";
 
 interface VideoParams {
@@ -35,6 +38,7 @@ interface VideoParams {
 
 export default function MultiImageVideoPage() {
   const t = useTranslations();
+  const router = useRouter();
   const [prompt, setPrompt] = usePromptState("");
   const [params, setParams] = useState<VideoParams>({
     negativePrompt: "",
@@ -45,11 +49,17 @@ export default function MultiImageVideoPage() {
     duration: 5,
     frameRate: 24,
   });
-  const [videoUrl, setVideoUrl] = useState("");
-  const [status, setStatus] = useState("");
-  const [progress, setProgress] = useState(0);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+  const {
+    videoUrl,
+    status,
+    progress,
+    error,
+    loading,
+    setError,
+    begin,
+    fail,
+    start,
+  } = useVideoPolling();
 
   const handleChange = (key: keyof VideoParams, value: unknown) => {
     setParams((s) => ({ ...s, [key]: value }));
@@ -69,11 +79,7 @@ export default function MultiImageVideoPage() {
       return;
     }
 
-    setLoading(true);
-    setError("");
-    setVideoUrl("");
-    setStatus("queued");
-    setProgress(0);
+    begin();
 
     try {
       const dims = getVideoDimensions(params.resolution, params.ratio);
@@ -82,7 +88,6 @@ export default function MultiImageVideoPage() {
 
       const payload: Record<string, unknown> = {
         prompt,
-        model: "agnes-video-v2.0",
         frame_rate: params.frameRate,
         extra_body: {
           image: imageUrls,
@@ -114,71 +119,21 @@ export default function MultiImageVideoPage() {
       const videoId = data.data?.video_id || data.data?.id || data.data?.task_id;
       if (!videoId) throw new Error(t("error.noVideoTaskId"));
 
-      pollVideoStatus(videoId);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t("error.generationFailed"));
-      setStatus("failed");
-      setLoading(false);
-    }
-  };
-
-  const pollVideoStatus = async (videoId: string) => {
-    let waited = 0;
-    const maxWait = 1800_000;
-    const interval = 5000;
-
-    while (waited < maxWait) {
-      await new Promise((r) => setTimeout(r, interval));
-      waited += interval;
-
-      try {
-        const res = await fetch(`/api/video/status/${encodeURIComponent(videoId)}`);
-        const data = await res.json();
-
-        if (data.error) {
-          setStatus("failed");
-          setError(data.error);
-          return;
-        }
-
-        const statusData = data.data;
-        const s = statusData.status;
-        const p = statusData.progress || 0;
-
-        setStatus(s);
-        setProgress(p);
-
-        if (s === "completed") {
-          const url = statusData.url || "";
-          setVideoUrl(url);
-          setLoading(false);
-          setStatus("");
-          setProgress(100);
-
-          // Record video in history
+      await start(videoId, {
+        timeoutMessage: t("error.videoTimeout"),
+        failedMessage: t("error.generationFailed"),
+        onComplete: (url) => {
           addHistoryEntry({
             type: "video",
             sourceRoute: "/multi-image-video",
             prompt,
             mediaUrl: url,
           });
-          return;
-        }
-
-        if (s === "failed") {
-          setError(statusData.error?.message || t("error.generationFailed"));
-          setStatus("failed");
-          setLoading(false);
-          return;
-        }
-      } catch (err) {
-        console.error("Poll error:", err);
-      }
+        },
+      });
+    } catch (err) {
+      fail(err instanceof Error ? err.message : t("error.generationFailed"));
     }
-
-    setError(t("error.videoTimeout"));
-    setStatus("failed");
-    setLoading(false);
   };
 
   return (
@@ -205,7 +160,7 @@ export default function MultiImageVideoPage() {
                   placeholder={t("miv.videoPlaceholder")}
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  onOptimize={() => window.location.href = "/optimize"}
+                  onOptimize={() => router.push("/optimize")}
                   rows={4}
                 />
 
@@ -276,14 +231,7 @@ export default function MultiImageVideoPage() {
                   />
                 </div>
 
-                {error && (
-                  <div className="rounded-lg px-3 py-2 text-sm" style={{
-                    background: "var(--error-soft)",
-                    color: "var(--error)",
-                  }}>
-                    {error}
-                  </div>
-                )}
+                <ErrorBanner message={error} />
 
                 <Button
                   onClick={handleSubmit}
