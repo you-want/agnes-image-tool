@@ -1,13 +1,29 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { agnesFetch, errorResponse, successResponse } from "@/lib/agnes-api";
 import { loadServerConfig } from "@/lib/config";
+import {
+  checkRateLimit,
+  readJsonLimited,
+  isValidImageSize,
+  isValidImageRatio,
+  TEXT_BODY_LIMIT,
+} from "@/lib/api-guard";
+
+const MAX_PROMPT_LEN = 4000;
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { prompt, size = "1K", ratio = "1:1", extra_body } = body;
+    const limited = await checkRateLimit(request);
+    if (limited) return limited;
 
-    if (!prompt) return errorResponse("Prompt is required");
+    const parsed = await readJsonLimited(request, TEXT_BODY_LIMIT);
+    if (parsed.error) return parsed.error;
+    const { prompt, size = "1K", ratio = "1:1", extra_body } = parsed.data;
+
+    if (typeof prompt !== "string" || !prompt.trim()) return errorResponse("Prompt is required");
+    if (prompt.length > MAX_PROMPT_LEN) return errorResponse("Prompt is too long");
+    if (!isValidImageSize(size)) return errorResponse("Invalid size");
+    if (!isValidImageRatio(ratio)) return errorResponse("Invalid ratio");
 
     const serverConfig = await loadServerConfig();
 

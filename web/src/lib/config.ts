@@ -36,23 +36,6 @@ export async function loadServerConfig(): Promise<AppConfig> {
   }
 }
 
-// ---- Client-side: read/write localStorage ----
-
-export function getClientConfig(): AppConfig {
-  if (typeof window === "undefined") return { ...DEFAULTS };
-  try {
-    const raw = localStorage.getItem(CONFIG_KEY);
-    return parseConfig(raw ?? undefined);
-  } catch {
-    return { ...DEFAULTS };
-  }
-}
-
-export function saveClientConfig(config: AppConfig): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-}
-
 // ---- API route helpers ----
 
 export function resolveApiKey(requestBodyKey?: string): string {

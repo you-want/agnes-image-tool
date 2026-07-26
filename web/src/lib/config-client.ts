@@ -1,40 +1,44 @@
-const CONFIG_KEY = "agnes_creator_config";
+// Client-side config access. The API key is NEVER stored in the browser
+// (no localStorage, no JS-readable cookie); it lives only in an HttpOnly cookie
+// set by /api/config/save. The client can only learn whether a key is
+// configured, never read it back.
 
-export interface AppConfig {
-  apiKey: string;
+export interface ConfigStatus {
+  hasApiKey: boolean;
   baseUrl: string;
 }
 
-const DEFAULTS: AppConfig = {
-  apiKey: "",
-  baseUrl: "https://apihub.agnes-ai.com",
-};
+export interface SaveConfigInput {
+  apiKey?: string;
+  baseUrl?: string;
+  clear?: boolean;
+}
 
-function parseConfig(raw: string | undefined): AppConfig {
+const DEFAULT_BASE_URL = "https://apihub.agnes-ai.com";
+
+export async function fetchConfigStatus(): Promise<ConfigStatus> {
   try {
-    const parsed = raw ? JSON.parse(raw) : {};
+    const res = await fetch("/api/config/save", { method: "GET" });
+    if (!res.ok) throw new Error("status request failed");
+    const data = await res.json();
     return {
-      apiKey: parsed.apiKey || DEFAULTS.apiKey,
-      baseUrl: parsed.baseUrl || DEFAULTS.baseUrl,
+      hasApiKey: Boolean(data.hasApiKey),
+      baseUrl: typeof data.baseUrl === "string" ? data.baseUrl : DEFAULT_BASE_URL,
     };
   } catch {
-    return { ...DEFAULTS };
+    return { hasApiKey: false, baseUrl: DEFAULT_BASE_URL };
   }
 }
 
-// ---- Client-side: read/write localStorage ----
-
-export function getClientConfig(): AppConfig {
-  if (typeof window === "undefined") return { ...DEFAULTS };
+export async function saveConfig(input: SaveConfigInput): Promise<boolean> {
   try {
-    const raw = localStorage.getItem(CONFIG_KEY);
-    return parseConfig(raw ?? undefined);
+    const res = await fetch("/api/config/save", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+    return res.ok;
   } catch {
-    return { ...DEFAULTS };
+    return false;
   }
-}
-
-export function saveClientConfig(config: AppConfig): void {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
 }

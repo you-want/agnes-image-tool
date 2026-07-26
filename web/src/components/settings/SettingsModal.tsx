@@ -6,8 +6,10 @@ import { X, Save, RotateCcw, Check, Loader2 } from "lucide-react";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
-import { getClientConfig, saveClientConfig, type AppConfig } from "@/lib/config-client";
+import { fetchConfigStatus, saveConfig } from "@/lib/config-client";
 import { useTranslations } from "@/hooks/useLocale";
+
+const DEFAULT_BASE_URL = "https://apihub.agnes-ai.com";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -16,49 +18,43 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const t = useTranslations();
-  const [config, setConfig] = useState<AppConfig>({
-    apiKey: "",
-    baseUrl: "https://apihub.agnes-ai.com",
-  });
+  // apiKey holds only what the user types this session — the saved key is never
+  // sent back to the browser. `hasApiKey` reflects whether one is stored.
+  const [apiKey, setApiKey] = useState("");
+  const [baseUrl, setBaseUrl] = useState(DEFAULT_BASE_URL);
+  const [hasApiKey, setHasApiKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      const current = getClientConfig();
-      setConfig(current);
+      setApiKey("");
       setSaved(false);
+      fetchConfigStatus().then((status) => {
+        setHasApiKey(status.hasApiKey);
+        setBaseUrl(status.baseUrl || DEFAULT_BASE_URL);
+      });
     }
   }, [isOpen]);
 
   const handleSave = async () => {
     setSaving(true);
-    saveClientConfig(config);
-
-    try {
-      await fetch("/api/config/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(config),
-      });
-    } catch {} finally {
-      setSaving(false);
-      setSaved(true);
-      setTimeout(() => {
-        setSaved(false);
-        onClose();
-      }, 1500);
-    }
+    // Blank apiKey => server keeps the existing key.
+    await saveConfig({ apiKey: apiKey.trim() || undefined, baseUrl });
+    setSaving(false);
+    setSaved(true);
+    setTimeout(() => {
+      setSaved(false);
+      onClose();
+    }, 1500);
   };
 
-  const handleReset = () => {
-    const resetConfig: AppConfig = {
-      apiKey: "",
-      baseUrl: "https://apihub.agnes-ai.com",
-    };
-    setConfig(resetConfig);
-    saveClientConfig(resetConfig);
+  const handleReset = async () => {
+    setApiKey("");
+    setBaseUrl(DEFAULT_BASE_URL);
+    setHasApiKey(false);
     setSaved(false);
+    await saveConfig({ clear: true, baseUrl: DEFAULT_BASE_URL });
   };
 
   return (
@@ -98,18 +94,26 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <div className="space-y-4">
                 <Input
                   label={t("settings.apiKey")}
-                  placeholder={t("settings.apiKeyPlaceholder")}
-                  value={config.apiKey}
-                  onChange={(e) => setConfig((c) => ({ ...c, apiKey: e.target.value }))}
-                  hint={t("settings.apiKeyHint")}
+                  placeholder={
+                    hasApiKey
+                      ? t("settings.apiKeyConfiguredPlaceholder")
+                      : t("settings.apiKeyPlaceholder")
+                  }
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  hint={
+                    hasApiKey
+                      ? t("settings.apiKeyConfiguredHint")
+                      : t("settings.apiKeyHint")
+                  }
                   type="password"
                 />
 
                 <Input
                   label={t("settings.baseUrl")}
                   placeholder={t("settings.baseUrlPlaceholder")}
-                  value={config.baseUrl}
-                  onChange={(e) => setConfig((c) => ({ ...c, baseUrl: e.target.value }))}
+                  value={baseUrl}
+                  onChange={(e) => setBaseUrl(e.target.value)}
                   hint={t("settings.baseUrlHint")}
                 />
 

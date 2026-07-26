@@ -29,16 +29,8 @@ export function createAuthHeaders(apiKey: string) {
   };
 }
 
-async function getServerConfig() {
-  try {
-    return await loadServerConfig();
-  } catch {
-    return { apiKey: "", baseUrl: "https://apihub.agnes-ai.com" };
-  }
-}
-
 export async function agnesFetch(path: string, body: unknown, apiKey?: string, baseUrl?: string) {
-  const config = await getServerConfig();
+  const config = await loadServerConfig();
   const resolvedKey = apiKey?.trim() || config.apiKey || "";
   const resolvedBase = baseUrl?.replace(/\/+$/, "") || config.baseUrl || "https://apihub.agnes-ai.com";
   const url = `${resolvedBase}${path}`;
@@ -64,7 +56,7 @@ export async function agnesFetch(path: string, body: unknown, apiKey?: string, b
 }
 
 export async function agnesGet(path: string, apiKey?: string, baseUrl?: string) {
-  const config = await getServerConfig();
+  const config = await loadServerConfig();
   const resolvedKey = apiKey?.trim() || config.apiKey || "";
   const resolvedBase = baseUrl?.replace(/\/+$/, "") || config.baseUrl || "https://apihub.agnes-ai.com";
   const url = `${resolvedBase}${path}`;
