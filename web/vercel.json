@@ -1,4 +1,12 @@
 {
+  "framework": "nextjs",
   "buildCommand": "npm run build",
-  "framework": "nextjs"
+  "installCommand": "npm ci",
+  "devCommand": "npm run dev",
+  "region": "hnd1",
+  "functions": {
+    "app/api/**/*.js": {
+      "maxDuration": 60
+    }
+  }
 }
