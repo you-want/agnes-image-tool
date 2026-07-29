@@ -1,5 +1,23 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
+/**
+ * API helper endpoints are relative to API_BASE_URL (for example,
+ * `/image/generate`, not `/api/image/generate`). Keep this resolver tolerant of
+ * an accidental duplicated `/api` prefix so callers cannot produce `/api/api`.
+ */
+export function resolveApiUrl(input: string, baseUrl = API_BASE_URL): string {
+  if (/^https?:\/\//i.test(input)) return input;
+
+  const base = baseUrl.replace(/\/+$/, "");
+  let path = input.startsWith("/") ? input : `/${input}`;
+
+  if (base.endsWith("/api") && (path === "/api" || path.startsWith("/api/"))) {
+    path = path.slice(4) || "/";
+  }
+
+  return `${base}${path}`;
+}
+
 export interface OfflineRequestOptions {
   method?: "GET" | "POST" | "PUT" | "DELETE";
   headers?: Record<string, string>;
@@ -17,7 +35,7 @@ export async function fetchWithOffline(
   input: string,
   options: OfflineRequestOptions = {}
 ): Promise<Response> {
-  const url = input.startsWith("http") ? input : `${API_BASE_URL}${input}`;
+  const url = resolveApiUrl(input);
   const {
     method = "GET",
     headers = {},
@@ -40,6 +58,13 @@ export async function fetchWithOffline(
       cache,
       signal: controller.signal,
     });
+  } catch (error) {
+    if (controller.signal.aborted) {
+      const seconds = Math.ceil(timeout / 1000);
+      const unit = seconds === 1 ? "second" : "seconds";
+      throw new Error(`Request timed out after ${seconds} ${unit}`);
+    }
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }
@@ -48,9 +73,11 @@ export async function fetchWithOffline(
 // Helper for POST requests (like image generation)
 export async function apiPost<T>(
   endpoint: string,
-  data: unknown
+  data: unknown,
+  options: Omit<OfflineRequestOptions, "method" | "body"> = {}
 ): Promise<T> {
   const response = await fetchWithOffline(endpoint, {
+    ...options,
     method: "POST",
     body: JSON.stringify(data),
   });

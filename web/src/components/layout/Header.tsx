@@ -3,11 +3,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Globe, Moon, Settings, Sun } from "lucide-react";
+import { Check, Globe, Menu, Moon, Settings, Sun, X } from "lucide-react";
 import SettingsModal from "@/components/settings/SettingsModal";
 import HistoryButton from "@/components/layout/HistoryButton";
-import HistoryModal from "@/components/layout/HistoryModal";
 import { useTheme } from "@/hooks/useTheme";
 import { NAV_ITEMS } from "@/lib/constants";
 import { useLocale, useTranslations } from "@/hooks/useLocale";
@@ -16,10 +16,16 @@ export default function Header() {
   const t = useTranslations();
   const { theme, toggleTheme } = useTheme();
   const { locale, setLocale } = useLocale();
+  const pathname = usePathname();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [localeOpen, setLocaleOpen] = useState(false);
-  const [historyOpen, setHistoryOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [brandFirst, ...brandRest] = t("brand.name").split(" ");
+
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 border-b" style={{
@@ -49,13 +55,16 @@ export default function Header() {
         </Link>
 
         {/* Desktop Nav */}
-        <nav className="hidden lg:flex items-center gap-1">
+        <nav className="hidden md:flex items-center gap-1">
           {NAV_ITEMS.filter((_, i) => i > 0).map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className="rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/[0.05]"
-              style={{ color: "var(--text-secondary)" }}
+              style={{
+                color: isActive(item.href) ? "var(--accent)" : "var(--text-secondary)",
+                background: isActive(item.href) ? "var(--accent-soft)" : "transparent",
+              }}
             >
               {t(item.labelKey)}
             </Link>
@@ -117,7 +126,7 @@ export default function Header() {
             </AnimatePresence>
           </div>
 
-          <HistoryButton onClick={() => setHistoryOpen(true)} />
+          <HistoryButton />
 
           <button
             onClick={() => setSettingsOpen(true)}
@@ -136,11 +145,63 @@ export default function Header() {
           >
             {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
           </button>
+
+          {/* Mobile Menu Toggle */}
+          <button
+            onClick={() => setMobileNavOpen(!mobileNavOpen)}
+            className="md:hidden flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-black/5 dark:hover:bg-white/[0.05]"
+            style={{ color: "var(--text-secondary)" }}
+            aria-label="Toggle menu"
+          >
+            {mobileNavOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
       </div>
 
+      {/* Mobile Navigation */}
+      <AnimatePresence>
+        {mobileNavOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileNavOpen(false)}
+              className="fixed inset-0 top-[var(--header-height)] z-40 bg-black/30 backdrop-blur-sm md:hidden"
+            />
+            <motion.nav
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.15 }}
+              className="absolute top-full left-0 right-0 z-50 border-b shadow-lg md:hidden overflow-hidden"
+              style={{
+                background: "var(--bg-elevated)",
+                borderColor: "var(--border)",
+              }}
+            >
+              <div className="container-page py-3 flex flex-col gap-1">
+                {NAV_ITEMS.filter((_, i) => i > 0).map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMobileNavOpen(false)}
+                    className="rounded-md px-3 py-2.5 text-sm font-medium transition-colors hover:bg-black/5 dark:hover:bg-white/[0.05]"
+                    style={{
+                      color: isActive(item.href) ? "var(--accent)" : "var(--text-secondary)",
+                      background: isActive(item.href) ? "var(--accent-soft)" : "transparent",
+                    }}
+                  >
+                    {t(item.labelKey)}
+                  </Link>
+                ))}
+              </div>
+            </motion.nav>
+          </>
+        )}
+      </AnimatePresence>
+
       <SettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
-      <HistoryModal isOpen={historyOpen} onClose={() => setHistoryOpen(false)} />
     </header>
   );
 }

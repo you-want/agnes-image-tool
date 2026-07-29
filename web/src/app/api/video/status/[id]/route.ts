@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { agnesGet, errorResponse } from "@/lib/agnes-api";
+import { agnesGet, errorResponse, classifyError } from "@/lib/agnes-api";
 import { loadServerConfig } from "@/lib/config";
 import { checkRateLimit } from "@/lib/api-guard";
 
@@ -31,7 +31,7 @@ export async function GET(
       return NextResponse.json({ data: result });
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message);
+    const { message, status } = classifyError(error);
+    return errorResponse(message, status);
   }
 }

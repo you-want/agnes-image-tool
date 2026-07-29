@@ -1,7 +1,7 @@
 "use client";
 
-import { useRef } from "react";
-import { Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
+import { Loader2, Download, Link as LinkIcon, Check } from "lucide-react";
 import { useTranslations } from "@/hooks/useLocale";
 
 interface VideoPlayerProps {
@@ -14,6 +14,17 @@ interface VideoPlayerProps {
 export default function VideoPlayer({ src, progress = 0, status, error }: VideoPlayerProps) {
   const t = useTranslations();
   const videoRef = useRef<HTMLVideoElement>(null);
+  const [copied, setCopied] = useState(false);
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
   if (error) {
     return (
@@ -49,14 +60,34 @@ export default function VideoPlayer({ src, progress = 0, status, error }: VideoP
       borderColor: "var(--border)",
       background: "#000",
     }}>
-      <video
-        ref={videoRef}
-        src={src}
-        controls
-        playsInline
-        className="w-full aspect-video"
-      />
-      {/* Progress bar */}
+      <div className="relative">
+        <video
+          ref={videoRef}
+          src={src}
+          controls
+          playsInline
+          className="w-full aspect-video"
+        />
+        <div className="absolute top-3 right-3 flex gap-2">
+          <a
+            href={src}
+            download="agnes-video.mp4"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t("common.download")}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white transition-transform hover:scale-110"
+          >
+            <Download size={16} />
+          </a>
+          <button
+            aria-label={copied ? t("common.copied") : t("common.copyLink")}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white transition-transform hover:scale-110"
+            onClick={() => copyToClipboard(src)}
+          >
+            {copied ? <Check size={16} /> : <LinkIcon size={16} />}
+          </button>
+        </div>
+      </div>
       {progress > 0 && progress < 100 && (
         <div className="h-1" style={{ background: "var(--bg-secondary)" }}>
           <div

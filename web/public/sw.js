@@ -1,6 +1,6 @@
 // Bump the version on each deploy that changes caching behavior so the
 // activate handler evicts stale caches and clients pick up the new SW.
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `agnes-forge-${CACHE_VERSION}`;
 const STATIC_CACHE_NAME = `agnes-static-${CACHE_VERSION}`;
 

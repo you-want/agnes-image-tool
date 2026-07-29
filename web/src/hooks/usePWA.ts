@@ -35,6 +35,27 @@ export function usePWA({
 
     if (!isSWSupportedRef.current) return;
 
+    // A production service worker previously installed on localhost can keep
+    // serving stale Next.js chunks during local development. Do not use a
+    // service worker in dev, and remove Agnes caches left by older sessions.
+    if (process.env.NODE_ENV !== "production") {
+      void navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) =>
+          Promise.all(registrations.map((item) => item.unregister()))
+        );
+
+      if ("caches" in window) {
+        void caches.keys().then((keys) =>
+          Promise.all(
+            keys
+              .filter((key) => key.startsWith("agnes-"))
+              .map((key) => caches.delete(key))
+          )
+        );
+      }
+    }
+
     // Handle online/offline status
     const handleOnline = () => {
       setIsOffline(false);
@@ -60,7 +81,7 @@ export function usePWA({
   }, [onOffline, onOnline]);
 
   const registerServiceWorker = useCallback(async () => {
-    if (!isSWSupportedRef.current) return;
+    if (process.env.NODE_ENV !== "production" || !isSWSupportedRef.current) return;
 
     try {
       const reg = await navigator.serviceWorker.register("/sw.js", {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, ZoomIn, Trash2, Copy, Check, Info } from "lucide-react";
+import { Download, ZoomIn, Trash2, Copy, Check, Link as LinkIcon, Info } from "lucide-react";
 import Modal from "@/components/ui/Modal";
 import LazyImage from "@/components/ui/LazyImage";
 import Skeleton from "@/components/ui/Skeleton";
@@ -29,18 +29,18 @@ export default function ImageGallery({
   const t = useTranslations();
   const [selected, setSelected] = useState<number | null>(null);
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
-  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const handleDelete = (index: number, e: React.MouseEvent) => {
     e.stopPropagation();
     onDeleteImage?.(index);
   };
 
-  const copyToClipboard = async (text: string, index: number) => {
+  const copyToClipboard = async (text: string, key: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 1500);
+      setCopiedKey(key);
+      setTimeout(() => setCopiedKey(null), 1500);
     } catch (err) {
       console.error("Failed to copy:", err);
     }
@@ -139,6 +139,22 @@ export default function ImageGallery({
                   >
                     <Download size={16} />
                   </a>
+                  {img.url && (
+                    <button
+                      aria-label={
+                        copiedKey === `url-${i}`
+                          ? t("common.copied")
+                          : t("common.copyLink")
+                      }
+                      className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white transition-transform hover:scale-110"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyToClipboard(img.url!, `url-${i}`);
+                      }}
+                    >
+                      {copiedKey === `url-${i}` ? <Check size={16} /> : <LinkIcon size={16} />}
+                    </button>
+                  )}
                   <button
                     aria-label={t("common.zoomIn")}
                     className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white transition-transform hover:scale-110"
@@ -152,17 +168,17 @@ export default function ImageGallery({
                   {img.revised_prompt && (
                     <button
                       aria-label={
-                        copiedIndex === i
+                        copiedKey === `prompt-${i}`
                           ? t("common.copied")
                           : t("imageGallery.copyRevisedPrompt")
                       }
                       className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm text-white transition-transform hover:scale-110"
                       onClick={(e) => {
                         e.stopPropagation();
-                        copyToClipboard(img.revised_prompt!, i);
+                        copyToClipboard(img.revised_prompt!, `prompt-${i}`);
                       }}
                     >
-                      {copiedIndex === i ? <Check size={16} /> : <Copy size={16} />}
+                      {copiedKey === `prompt-${i}` ? <Check size={16} /> : <Copy size={16} />}
                     </button>
                   )}
                 </div>

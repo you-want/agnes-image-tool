@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3017",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3017",
     "lint": "next lint",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -14,6 +14,7 @@
   "dependencies": {
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.0",
+    "https-proxy-agent": "^9.1.0",
     "lucide-react": "^0.511.0",
     "next": "^15.3.1",
     "react": "^19.1.0",

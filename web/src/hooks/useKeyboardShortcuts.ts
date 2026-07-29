@@ -15,13 +15,13 @@ interface KeyboardShortcut {
 interface UseKeyboardShortcutsProps {
   shortcuts: KeyboardShortcut[];
   enabled?: boolean;
-  target?: Document | HTMLElement;
+  target?: Document | HTMLElement | null;
 }
 
 export function useKeyboardShortcuts({
   shortcuts,
   enabled = true,
-  target = document,
+  target,
 }: UseKeyboardShortcutsProps) {
   const callbackRef = useRef<Map<string, () => void>>(new Map());
 
@@ -69,13 +69,13 @@ export function useKeyboardShortcuts({
   }, [enabled, shortcuts]);
 
   useEffect(() => {
-    if (!enabled) return;
+    if (!enabled || typeof document === "undefined") return;
 
-    const element = target instanceof HTMLElement ? target : document;
-    element.addEventListener('keydown', handleKeyDown as EventListener);
+    const element = target ?? document;
+    element.addEventListener("keydown", handleKeyDown as EventListener);
 
     return () => {
-      element.removeEventListener('keydown', handleKeyDown as EventListener);
+      element.removeEventListener("keydown", handleKeyDown as EventListener);
     };
   }, [enabled, handleKeyDown, target]);
 }
@@ -93,6 +93,6 @@ export function useComponentShortcuts(
   return useKeyboardShortcuts({
     shortcuts,
     enabled: true,
-    target: containerRef.current || document,
+    target: containerRef.current,
   });
 }

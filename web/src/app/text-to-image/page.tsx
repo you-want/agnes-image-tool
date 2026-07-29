@@ -47,12 +47,18 @@ export default function TextToImagePage() {
     setImages([]);
 
     try {
-      const data = await apiPost<GenerateImageResponse>("/api/image/generate", {
-        prompt,
-        size,
-        ratio,
-        extra_body: { response_format: "url" },
-      });
+      const data = await apiPost<GenerateImageResponse>(
+        "/image/generate",
+        {
+          prompt,
+          size,
+          ratio,
+          extra_body: { response_format: "url" },
+        },
+        // Image generation may take several minutes. Keep the browser timeout
+        // slightly longer than the server-side Agnes request timeout (300s).
+        { timeout: 310_000 }
+      );
       if (data.error) throw new Error(data.error);
 
       const generatedImages = data.data?.data || [];

@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { agnesFetch, errorResponse, successResponse } from "@/lib/agnes-api";
+import { agnesFetch, errorResponse, successResponse, classifyError } from "@/lib/agnes-api";
 import { loadServerConfig } from "@/lib/config";
 import {
   checkRateLimit,
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
 
     return successResponse(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message);
+    const { message, status } = classifyError(error);
+    return errorResponse(message, status);
   }
 }

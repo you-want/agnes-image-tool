@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { agnesFetch, errorResponse, successResponse } from "@/lib/agnes-api";
+import { agnesFetch, errorResponse, successResponse, classifyError } from "@/lib/agnes-api";
 import { checkRateLimit, readJsonLimited, clampInt, TEXT_BODY_LIMIT } from "@/lib/api-guard";
 
 const LOCALE_LANG_NAMES: Record<string, string> = {
@@ -39,7 +39,6 @@ export async function POST(request: NextRequest) {
     if (messages.length > MAX_MESSAGES) return errorResponse("Too many messages");
     if (!messages.every(isValidMessage)) return errorResponse("Invalid message format");
 
-    // Clamp model params so a caller can't request an oversized/expensive completion.
     const safeTemperature = Math.min(Math.max(Number(temperature) || 0.7, 0), 2);
     const safeMaxTokens = clampInt(max_tokens, 1, 4096) ?? 2048;
 
@@ -65,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     return successResponse(result);
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return errorResponse(message);
+    const { message, status } = classifyError(error);
+    return errorResponse(message, status);
   }
 }
