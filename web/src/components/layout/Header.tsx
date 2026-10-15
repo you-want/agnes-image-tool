@@ -5,7 +5,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Globe, Menu, Moon, Settings, Sun, X } from "lucide-react";
+import { Check, Globe, Menu, Moon, Settings, ShieldCheck, Sun, UserRound, X } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import SettingsModal from "@/components/settings/SettingsModal";
 import HistoryButton from "@/components/layout/HistoryButton";
 import { useTheme } from "@/hooks/useTheme";
@@ -13,6 +14,7 @@ import { NAV_ITEMS } from "@/lib/constants";
 import { useLocale, useTranslations } from "@/hooks/useLocale";
 
 export default function Header() {
+  const { status } = useAuth();
   const t = useTranslations();
   const { theme, toggleTheme } = useTheme();
   const { locale, setLocale } = useLocale();
@@ -73,6 +75,10 @@ export default function Header() {
 
         {/* Right Actions */}
         <div className="flex items-center gap-1.5">
+          <Link href="/account" aria-label={status.allowed ? t("auth.account") : t("auth.login")} className="inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-medium" style={{ color: "var(--accent)", background: "var(--accent-soft)" }}>
+            {status.allowed ? <ShieldCheck size={17} /> : <UserRound size={17} />}
+            <span className="hidden sm:inline">{status.allowed ? t("auth.account") : t("auth.loginShort")}</span>
+          </Link>
           {/* Language Selector */}
           <div className="relative">
             <button

@@ -79,6 +79,12 @@ export default function MultiImageVideoPage() {
       return;
     }
 
+    const MAX_IMAGES_PER_REQUEST = 4;
+    if (imageUrls.length > MAX_IMAGES_PER_REQUEST) {
+      setError(t("miv.tooManyImages"));
+      return;
+    }
+
     begin();
 
     try {
@@ -188,7 +194,7 @@ export default function MultiImageVideoPage() {
                       color: "var(--text-primary)",
                     }}
                   />
-                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{t("miv.urlLineHint")}</p>
+                  <p className="text-xs" style={{ color: "var(--text-muted)" }}>{t("miv.urlLineHint")} ({t("miv.maxImagesHint")})</p>
                 </div>
 
                 <Select

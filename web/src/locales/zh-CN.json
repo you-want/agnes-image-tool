@@ -16,7 +16,8 @@
     "imageToImage": "图生图",
     "textToVideo": "文生视频",
     "imageToVideo": "图生视频",
-    "multiImageVideo": "多图视频"
+    "multiImageVideo": "多图视频",
+    "videoFlash": "Video 2.5 Flash"
   },
   "home": {
     "badge": "Agnes Forge · AI Creative Studio",
@@ -55,6 +56,10 @@
       "multiImageVideo": {
         "title": "多图视频",
         "desc": "多张图片关键帧动画，生成流畅过渡视频"
+      },
+      "videoFlash": {
+        "title": "Video 2.5 Flash",
+        "desc": "使用最新的 Agnes Video 2.5 Flash 模型，支持文生视频、首尾帧控制和图片/音频参考生成"
       }
     },
     "useFeature": "使用功能"
@@ -233,7 +238,9 @@
     "frameRate": "帧率",
     "frameRateHint": "帧率范围 1-60，推荐 24 或 30",
     "generate": "🎬 生成视频",
-    "generating": "生成中..."
+    "generating": "生成中...",
+    "maxImagesHint": "最多 4 张 / 次请求",
+    "tooManyImages": "单次请求最多 4 张图片，请减少图片数量"
   },
   "settings": {
     "title": "设置",
@@ -303,7 +310,9 @@
     "readImage": "无法读取上传的图片",
     "uploadRequired": "请上传图片或输入图片 URL",
     "imageTooLarge": "图片大小不能超过 10MB",
-    "offline": "你已离线,请检查网络连接。"
+    "offline": "你已离线,请检查网络连接。",
+    "keyframeRequired": "关键帧模式需要提供至少一张首帧或尾帧图片",
+    "referenceRequired": "参考模式需要提供至少一张图片或一段音频"
   },
   "offline": {
     "title": "您已离线",
@@ -354,5 +363,70 @@
     "updateTitle": "有可用更新",
     "updateDesc": "新功能与改进",
     "update": "更新"
+  },
+  "flash": {
+    "title": "Video 2.5 Flash",
+    "subtitle": "使用 Agnes Video 2.5 Flash 模型生成高质量视频，支持多种生成模式",
+    "mode": "生成模式",
+    "modeTextHint": "纯文本生成视频，无需参考素材",
+    "modeKeyframeHint": "提供首帧和/或尾帧图片，控制视频的起始和结束画面",
+    "modeReferenceHint": "提供参考图片或音频，让生成的视频与参考素材保持一致",
+    "prompt": "视频描述",
+    "promptPlaceholder": "描述你想生成的视频内容...",
+    "firstFrame": "首帧图片 URL",
+    "firstFramePlaceholder": "https://example.com/first.png",
+    "firstFrameHint": "关键帧模式的起始画面",
+    "lastFrame": "尾帧图片 URL",
+    "lastFramePlaceholder": "https://example.com/last.png",
+    "lastFrameHint": "关键帧模式的结束画面（与首帧至少提供一个）",
+    "images": "参考图片 URL",
+    "imagesHint": "每行一个图片 URL，最多 5 张",
+    "audios": "参考音频 URL",
+    "audiosHint": "每行一个音频 URL，最多 3 段",
+    "duration": "时长",
+    "aspectRatio": "画幅比例",
+    "outputSize": "输出尺寸：{size}（固定 720P）",
+    "negativePrompt": "负面提示词",
+    "negativePlaceholder": "描述你不想出现的内容",
+    "advanced": "高级参数",
+    "collapseAdvanced": "收起高级参数",
+    "seed": "随机种子",
+    "seedPlaceholder": "留空则随机",
+    "seedHint": "设置固定种子可复现相同结果",
+    "generate": "🎬 生成视频 (Flash)",
+    "generating": "生成中...",
+    "uploadImage": "上传本地图片",
+    "uploadAudio": "上传本地音频",
+    "uploadHint": "支持 JPG/PNG/WebP/GIF 图片和 MP3/WAV/M4A 音频，最大 50MB",
+    "uploadedPreview": "已上传",
+    "durationHint": "最长 12 秒（免费版限速，建议每次生成 4-12 秒片段）",
+    "stitching": "自动拼接",
+    "stitchingHint": "超过 12 秒时将自动分段生成，最后合并为完整视频",
+    "rateLimitNote": "免费版限速：约每 30 秒 1 次请求。生成 20 秒视频需 3-5 分钟，60 秒需 10-15 分钟",
+    "multiSegmentHint": "提示：生成长视频需要多次请求，每段 12 秒，生成后可用 FFmpeg 拼接"
+  },
+  "auth": {
+    "title": "关注公众号，免费生成图片",
+    "subtitle": "关注后回复关键词，获取个人验证码登录。无需填写 API Key。",
+    "loading": "正在确认登录状态…",
+    "signedIn": "已登录，可以开始创作",
+    "ready": "公众号授权正常，可使用每日免费创作额度。",
+    "start": "开始生成图片",
+    "logout": "退出登录",
+    "qrAlt": "{name}公众号二维码",
+    "qrFallback": "请在微信中搜索公众号「{name}」",
+    "stepFollow": "微信扫码关注「{name}」",
+    "stepKeyword": "在公众号对话中回复【{keyword}】",
+    "stepCode": "把收到的 6 位验证码填入下方",
+    "codeLabel": "公众号验证码",
+    "codeHint": "验证码仅可使用一次，请及时填写，切勿转发给他人。",
+    "login": "验证并登录",
+    "loginShort": "登录",
+    "loginFailed": "登录失败，请稍后重新获取验证码。",
+    "retry": "刷新登录状态",
+    "account": "我的账户",
+    "managedConfig": "模型由站点统一提供，关注公众号并登录后即可免费使用。API Key 和接口地址由管理员管理。",
+    "modelReady": "模型服务已配置",
+    "modelUnavailable": "模型服务暂未配置，请联系管理员。"
   }
 }

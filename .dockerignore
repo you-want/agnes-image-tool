@@ -1,0 +1,49 @@
+# Repository and local tool state
+.git
+**/.git
+.claude
+**/.claude
+.vercel
+**/.vercel
+.DS_Store
+**/.DS_Store
+
+# Secrets and runtime data
+.env
+.env.*
+**/.env
+**/.env.*
+.config.json
+history.json
+outputs
+logs
+web/uploads
+mv_*
+manju
+
+# Dependencies, builds, caches, and temporary files
+node_modules
+**/node_modules
+.venv
+venv
+env
+**/__pycache__
+**/*.pyc
+**/.next
+**/*.tsbuildinfo
+**/coverage
+**/.cache
+**/.pytest_cache
+**/.vite
+dist
+build
+tmp
+temp
+**/.tmp
+**/*.log
+
+# The root Dockerfile runs the legacy Python app
+web
+scripts
+supabase
+docs/short_video_*.md

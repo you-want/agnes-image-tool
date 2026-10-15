@@ -1,5 +1,8 @@
+import { recordVideoTask } from "@/lib/auth/video-tasks";
+import { takeQuota } from "@/lib/auth/quota";
+import { requireAccess } from "@/lib/auth/access";
 import { NextRequest } from "next/server";
-import { agnesFetch, errorResponse, successResponse, classifyError } from "@/lib/agnes-api";
+import { agnesFetch, errorResponse, successResponse, classifyError, getProxyAgent } from "@/lib/agnes-api";
 import { loadServerConfig } from "@/lib/config";
 import {
   checkRateLimit,
@@ -9,13 +12,76 @@ import {
   clampInt,
   IMAGE_BODY_LIMIT,
 } from "@/lib/api-guard";
+import https from "node:https";
 
 const MAX_PROMPT_LEN = 4000;
+const MAX_IMAGES_PER_REQUEST = 4; // Agnes Video API limit: "Image count N exceeds limit 4 per request"
+const IMAGE_URL_TIMEOUT_MS = 10_000;
+
+/**
+ * Validates that an external image URL is accessible and returns an image content type.
+ * Uses GET (instead of HEAD) because many image CDNs reject HEAD or return 405.
+ * Respects the same proxy configuration as the main API client.
+ * Returns null if the URL is valid, or an error message string if not.
+ */
+async function validateImageUrl(url: string): Promise<string | null> {
+  return new Promise((resolve) => {
+    const parsedUrl = new URL(url);
+    const agent = getProxyAgent();
+
+    const reqOptions: any = {
+      hostname: parsedUrl.hostname,
+      port: parsedUrl.port || 443,
+      path: parsedUrl.pathname + parsedUrl.search,
+      method: "GET",
+      agent: agent || undefined,
+      timeout: IMAGE_URL_TIMEOUT_MS,
+    };
+
+    const req = https.request(reqOptions, (res) => {
+      let body = "";
+      res.on("data", (chunk: string) => (body += chunk));
+      res.on("end", () => {
+        if (res.statusCode !== undefined && res.statusCode! < 200) {
+          resolve(`Image URL returned HTTP ${res.statusCode}. Please ensure the URL is publicly accessible and not behind authentication.`);
+          return;
+        }
+
+        const contentType = res.headers["content-type"] || "";
+        if (!contentType.startsWith("image/")) {
+          resolve(`Image URL returned content type "${contentType}" instead of an image. Please provide a valid image URL.`);
+          return;
+        }
+
+        resolve(null);
+      });
+    });
+
+    req.on("error", (err) => {
+      const message = err instanceof Error ? err.message : String(err);
+      if (message.includes("timed out") || message.includes("AbortError")) {
+        resolve(`Image URL timed out after ${IMAGE_URL_TIMEOUT_MS / 1000}s. Please check your network connection or use a different image URL.`);
+      } else {
+        resolve(`Failed to access image URL: ${message}`);
+      }
+    });
+
+    req.on("timeout", () => {
+      req.destroy();
+      resolve(`Image URL timed out after ${IMAGE_URL_TIMEOUT_MS / 1000}s. Please check your network connection or use a different image URL.`);
+    });
+
+    req.end();
+  });
+}
 
 export async function POST(request: NextRequest) {
   try {
     const limited = await checkRateLimit(request);
     if (limited) return limited;
+
+    const access = await requireAccess(request);
+    if (access.response) return access.response;
 
     const parsed = await readJsonLimited(request, IMAGE_BODY_LIMIT);
     if (parsed.error) return parsed.error;
@@ -37,6 +103,27 @@ export async function POST(request: NextRequest) {
     if (prompt.length > MAX_PROMPT_LEN) return errorResponse("Prompt is too long");
     if (!isValidFrameRate(frame_rate)) return errorResponse("Invalid frame rate");
     if (mode !== undefined && !isValidVideoMode(mode)) return errorResponse("Invalid mode");
+
+    const extraImages = extra_body && Array.isArray((extra_body as Record<string, unknown>).image)
+      ? ((extra_body as Record<string, unknown>).image as unknown[]).filter((u) => typeof u === "string")
+      : [];
+    if (typeof image === "string" && image.trim()) extraImages.push(image);
+    if (extraImages.length > MAX_IMAGES_PER_REQUEST) {
+      return errorResponse(`Image count ${extraImages.length} exceeds limit ${MAX_IMAGES_PER_REQUEST} per request`, 400);
+    }
+
+    // Validate external image URLs before forwarding to upstream API
+    if (typeof image === "string" && image.trim()) {
+      const trimmedImage = image.trim();
+
+      // Only validate external URLs, not base64 data URIs
+      if (trimmedImage.startsWith("http://") || trimmedImage.startsWith("https://")) {
+        const imageError = await validateImageUrl(trimmedImage);
+        if (imageError) {
+          return errorResponse(`图片URL无效: ${imageError}`, 400);
+        }
+      }
+    }
 
     const serverConfig = await loadServerConfig();
 
@@ -70,8 +157,12 @@ export async function POST(request: NextRequest) {
     }
     if (extra_body) payload.extra_body = extra_body;
 
+    const quotaError = await takeQuota(access.userId, "video");
+    if (quotaError) return quotaError;
+
     const result = await agnesFetch("/v1/videos", payload, undefined, serverConfig.baseUrl);
 
+    await recordVideoTask(access.userId, result);
     return successResponse(result);
   } catch (error) {
     const { message, status } = classifyError(error);

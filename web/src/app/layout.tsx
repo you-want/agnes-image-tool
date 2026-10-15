@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { LocaleProvider } from "@/hooks/useLocale";
+import { AuthProvider } from "@/hooks/useAuth";
+import AccessGate from "@/components/auth/AccessGate";
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import PWAPrompt from "@/components/ui/PWAPrompt";
@@ -81,12 +83,14 @@ export default async function RootLayout({
       <body className="min-h-screen flex flex-col">
         <ThemeProvider>
           <LocaleProvider initialLocale={locale}>
+            <AuthProvider>
             <Header />
             <main className="flex-1 pt-[var(--header-height)]">
-              {children}
+              <AccessGate>{children}</AccessGate>
             </main>
             <Footer />
             <PWAPrompt />
+            </AuthProvider>
           </LocaleProvider>
         </ThemeProvider>
       </body>

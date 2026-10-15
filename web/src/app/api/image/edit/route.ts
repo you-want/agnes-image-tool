@@ -1,3 +1,5 @@
+import { takeQuota } from "@/lib/auth/quota";
+import { requireAccess } from "@/lib/auth/access";
 import { NextRequest } from "next/server";
 import { agnesFetch, errorResponse, successResponse, classifyError } from "@/lib/agnes-api";
 import { loadServerConfig } from "@/lib/config";
@@ -15,6 +17,9 @@ export async function POST(request: NextRequest) {
   try {
     const limited = await checkRateLimit(request);
     if (limited) return limited;
+
+    const access = await requireAccess(request);
+    if (access.response) return access.response;
 
     const parsed = await readJsonLimited(request, IMAGE_BODY_LIMIT);
     if (parsed.error) return parsed.error;
@@ -38,6 +43,9 @@ export async function POST(request: NextRequest) {
         response_format: "url",
       } as Record<string, unknown>,
     };
+
+    const quotaError = await takeQuota(access.userId, "image");
+    if (quotaError) return quotaError;
 
     const result = await agnesFetch("/v1/images/generations", payload, undefined, serverConfig.baseUrl);
 

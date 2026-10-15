@@ -3,9 +3,9 @@
   "buildCommand": "npm run build",
   "installCommand": "npm ci",
   "devCommand": "npm run dev",
-  "region": "hnd1",
+  "regions": ["hnd1"],
   "functions": {
-    "app/api/**/*.js": {
+    "src/app/api/**/route.ts": {
       "maxDuration": 60
     }
   }

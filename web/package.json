@@ -2,16 +2,21 @@
   "name": "agnes-forge",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=22"
+  },
   "scripts": {
     "dev": "next dev -p 3017",
     "build": "next build",
     "start": "next start -p 3017",
-    "lint": "next lint",
+    "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:auth-db": "node scripts/test-auth-db.mjs"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.117.3",
     "clsx": "^2.1.1",
     "framer-motion": "^12.23.0",
     "https-proxy-agent": "^9.1.0",

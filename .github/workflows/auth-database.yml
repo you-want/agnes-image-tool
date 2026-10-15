@@ -1,0 +1,32 @@
+name: Deploy image-tool authentication schema
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/migrations/**"
+      - "scripts/deploy-auth-database.mjs"
+      - ".github/workflows/auth-database.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agnes-auth-database
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: vars.SUPABASE_PROJECT_REF != ''
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_PROJECT_REF: ${{ vars.SUPABASE_PROJECT_REF }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Apply versioned migrations to the shared authentication project
+        run: node scripts/deploy-auth-database.mjs

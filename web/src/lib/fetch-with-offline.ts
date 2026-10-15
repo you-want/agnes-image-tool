@@ -84,6 +84,7 @@ export async function apiPost<T>(
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    if ((response.status === 401 || response.status === 403) && typeof window !== "undefined") window.dispatchEvent(new Event("agnes-auth-changed"));
     throw new Error(errorData.error || "Request failed");
   }
 
@@ -96,6 +97,7 @@ export async function apiGet<T>(endpoint: string): Promise<T> {
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
+    if ((response.status === 401 || response.status === 403) && typeof window !== "undefined") window.dispatchEvent(new Event("agnes-auth-changed"));
     throw new Error(errorData.error || "Request failed");
   }
 

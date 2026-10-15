@@ -16,7 +16,8 @@
     "imageToImage": "Image to Image",
     "textToVideo": "Text to Video",
     "imageToVideo": "Image to Video",
-    "multiImageVideo": "Multi-Image Video"
+    "multiImageVideo": "Multi-Image Video",
+    "videoFlash": "Video 2.5 Flash"
   },
   "home": {
     "badge": "Agnes Forge · AI Creative Studio",
@@ -55,6 +56,10 @@
       "multiImageVideo": {
         "title": "Multi-Image Video",
         "desc": "Animate multiple keyframe images with smooth transitions"
+      },
+      "videoFlash": {
+        "title": "Video 2.5 Flash",
+        "desc": "Use the latest Agnes Video 2.5 Flash model for text-to-video, keyframe, and reference generation"
       }
     },
     "useFeature": "Use Feature"
@@ -233,7 +238,9 @@
     "frameRate": "Frame Rate",
     "frameRateHint": "Frame rate range 1-60, recommended 24 or 30",
     "generate": "🎬 Generate Video",
-    "generating": "Generating..."
+    "generating": "Generating...",
+    "maxImagesHint": "max 4 images per request",
+    "tooManyImages": "A single request supports at most 4 images. Please reduce the number of images."
   },
   "settings": {
     "title": "Settings",
@@ -318,7 +325,9 @@
     "readImage": "Failed to read uploaded image",
     "uploadRequired": "Please upload an image or enter an image URL",
     "imageTooLarge": "Image size cannot exceed 10MB",
-    "offline": "You're offline. Please check your connection."
+    "offline": "You're offline. Please check your connection.",
+    "keyframeRequired": "Keyframe mode requires at least one of first_frame or last_frame",
+    "referenceRequired": "Reference mode requires at least one image or audio URL"
   },
   "videoPlayer": {
     "waiting": "Waiting to generate...",
@@ -354,5 +363,70 @@
     "updateTitle": "Update available",
     "updateDesc": "New features and improvements",
     "update": "Update"
+  },
+  "flash": {
+    "title": "Video 2.5 Flash",
+    "subtitle": "Generate high-quality videos with Agnes Video 2.5 Flash, supporting multiple generation modes",
+    "mode": "Generation Mode",
+    "modeTextHint": "Generate video from text only, no reference materials needed",
+    "modeKeyframeHint": "Provide start and/or end frame images to control the video start and end",
+    "modeReferenceHint": "Provide reference images or audio for consistent style and content",
+    "prompt": "Video Description",
+    "promptPlaceholder": "Describe the video you want to generate...",
+    "firstFrame": "First Frame URL",
+    "firstFramePlaceholder": "https://example.com/first.png",
+    "firstFrameHint": "Starting frame for keyframe mode",
+    "lastFrame": "Last Frame URL",
+    "lastFramePlaceholder": "https://example.com/last.png",
+    "lastFrameHint": "Ending frame for keyframe mode (at least one of first/last required)",
+    "images": "Reference Images",
+    "imagesHint": "One URL per line, max 5 images",
+    "audios": "Reference Audio",
+    "audiosHint": "One URL per line, max 3 audio clips",
+    "duration": "Duration",
+    "aspectRatio": "Aspect Ratio",
+    "outputSize": "Output: {size} (fixed 720P)",
+    "negativePrompt": "Negative Prompt",
+    "negativePlaceholder": "Describe what you do not want to see",
+    "advanced": "Advanced",
+    "collapseAdvanced": "Collapse Advanced",
+    "seed": "Seed",
+    "seedPlaceholder": "Leave empty for random",
+    "seedHint": "Set a fixed seed for reproducible results",
+    "generate": "🎬 Generate Video (Flash)",
+    "generating": "Generating...",
+    "uploadImage": "Upload Image",
+    "uploadAudio": "Upload Audio",
+    "uploadHint": "Supports JPG/PNG/WebP/GIF images and MP3/WAV/M4A audio, max 50MB",
+    "uploadedPreview": "Uploaded",
+    "durationHint": "Max 12s (free tier rate limit)",
+    "stitching": "Auto Stitch",
+    "stitchingHint": "Videos over 12s are automatically split into segments and merged",
+    "rateLimitNote": "Free tier limit: ~1 request per 30s. 20s video takes 3-5 min, 60s takes 10-15 min",
+    "multiSegmentHint": "Tip: Generate multiple 12s clips, then merge with FFmpeg"
+  },
+  "auth": {
+    "title": "Follow our WeChat account to create for free",
+    "subtitle": "Follow the account and request a personal login code. No API key needed.",
+    "loading": "Checking your login…",
+    "signedIn": "You are signed in",
+    "ready": "Your account is authorized to use the daily free creation allowance.",
+    "start": "Create an image",
+    "logout": "Sign out",
+    "qrAlt": "{name} WeChat account QR code",
+    "qrFallback": "Search WeChat for “{name}”",
+    "stepFollow": "Scan in WeChat and follow “{name}”",
+    "stepKeyword": "Send “{keyword}” in the account chat",
+    "stepCode": "Enter the 6-digit code you receive below",
+    "codeLabel": "WeChat login code",
+    "codeHint": "Each code works once. Enter it promptly and do not share it.",
+    "login": "Verify and sign in",
+    "loginShort": "Sign in",
+    "loginFailed": "Sign-in failed. Please request a new code and try again.",
+    "retry": "Refresh login status",
+    "account": "My account",
+    "managedConfig": "The site provides the model. Follow our WeChat account and sign in to use it for free. The administrator manages the API key and endpoint.",
+    "modelReady": "Model service is configured",
+    "modelUnavailable": "Model service is unavailable. Please contact the administrator."
   }
 }

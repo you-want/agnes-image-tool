@@ -1,0 +1,4 @@
+project_id = "agnes-image-tool"
+
+[db]
+major_version = 15

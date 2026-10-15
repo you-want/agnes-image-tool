@@ -30,8 +30,30 @@ Thumbs.db
 
 # Env
 .env
-.env.local
-.env.*.local
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.*.sample
+!.env.template
+!.env.*.template
+
+# JavaScript dependencies and generated output (at any depth)
+node_modules/
+.next/
+out/
+.vercel/
+*.tsbuildinfo
+
+# Test and tool caches
+coverage/
+.cache/
+.pytest_cache/
+.vite/
+.claude/settings.local.json
+.claude/*.lock
+supabase/.temp/
+supabase/.branches/
 
 # Logs
 *.log
@@ -40,4 +62,17 @@ logs/
 # Temp files
 tmp/
 temp/
+.tmp/
 *.tmp
+
+# MV working directories
+/mv_*/
+/manju/
+
+# Local video-production scripts and storyboards (not part of the app)
+/scripts/generate_tuoduo_segments.js
+/scripts/generate_tuoduo_segments.py
+/scripts/regenerate_seg01.js
+/scripts/retry_tuoduo.js
+/docs/short_video_01_seatbelt.md
+/docs/short_video_02_helmet.md

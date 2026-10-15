@@ -9,7 +9,7 @@ const REQUEST_TIMEOUT_MS = 300_000;
 
 let _proxyAgent: HttpsProxyAgent<string> | null | undefined = undefined;
 
-function getProxyAgent(): HttpsProxyAgent<string> | null {
+export function getProxyAgent(): HttpsProxyAgent<string> | null {
   if (_proxyAgent !== undefined) return _proxyAgent;
   const proxyUrl = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || process.env.AGNES_PROXY;
   if (!proxyUrl) {

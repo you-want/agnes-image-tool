@@ -1,3 +1,5 @@
+import { takeQuota } from "@/lib/auth/quota";
+import { requireAccess } from "@/lib/auth/access";
 import { NextRequest } from "next/server";
 import { agnesFetch, errorResponse, successResponse, classifyError } from "@/lib/agnes-api";
 import { checkRateLimit, readJsonLimited, clampInt, TEXT_BODY_LIMIT } from "@/lib/api-guard";
@@ -29,6 +31,9 @@ export async function POST(request: NextRequest) {
     const limited = await checkRateLimit(request);
     if (limited) return limited;
 
+    const access = await requireAccess(request);
+    if (access.response) return access.response;
+
     const parsed = await readJsonLimited(request, TEXT_BODY_LIMIT);
     if (parsed.error) return parsed.error;
     const { messages, temperature = 0.7, max_tokens = 2048, locale } = parsed.data;
@@ -54,6 +59,9 @@ export async function POST(request: NextRequest) {
           : msg
       );
     }
+
+    const quotaError = await takeQuota(access.userId, "chat");
+    if (quotaError) return quotaError;
 
     const result = await agnesFetch("/v1/chat/completions", {
       model: "agnes-2.0-flash",

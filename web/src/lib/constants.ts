@@ -187,4 +187,5 @@ export const NAV_ITEMS: NavItem[] = [
   { href: "/text-to-video", labelKey: "nav.textToVideo", icon: "clapperboard" },
   { href: "/image-to-video", labelKey: "nav.imageToVideo", icon: "film" },
   { href: "/multi-image-video", labelKey: "nav.multiImageVideo", icon: "photos" },
+  { href: "/video-flash", labelKey: "nav.videoFlash", icon: "zap" },
 ];

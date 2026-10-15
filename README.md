@@ -2,6 +2,8 @@
 
 **AI 驱动的图像与视频创作工具**，基于 Agnes AI API 构建，支持文生图、图生图、文生视频、图生视频、多图视频等功能。
 
+> Next.js 网站位于 `web/`，现支持公众号个人验证码登录：关注公众号并回复【登录】，验证后使用免费创作额度。[配置与部署说明](docs/wechat-login.md)。下文 Python/Gradio 是独立旧入口，不包含网站的登录保护。
+
 ![Python](https://img.shields.io/badge/Python-3.10+-blue?logo=python)
 ![Gradio](https://img.shields.io/badge/Gradio-6.0-orange?logo=gradio)
 ![License](https://img.shields.io/badge/License-MIT-green)
