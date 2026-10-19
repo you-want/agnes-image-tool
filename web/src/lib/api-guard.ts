@@ -137,6 +137,16 @@ export const TEXT_BODY_LIMIT = 256 * 1024;
 /** ~20 MB — accommodates a 10 MB image encoded as base64 (~13.3 MB) + fields. */
 export const IMAGE_BODY_LIMIT = 20 * 1024 * 1024;
 
+/**
+ * Agnes API hard limit: at most 4 images per request (image API's
+ * extra_body.image array and video API's images array both cap at 4).
+ * Exceeding it returns 400 "Image count N exceeds limit 4 per request".
+ * Always cap arrays to this before submitting to the API.
+ */
+export const AGNES_MAX_IMAGES = 4;
+/** Cap reference audios the same way (API limit is 3, keep in sync with routes). */
+export const AGNES_MAX_AUDIOS = 3;
+
 type ParsedBody =
   | { data: Record<string, unknown>; error?: undefined }
   | { data?: undefined; error: NextResponse };

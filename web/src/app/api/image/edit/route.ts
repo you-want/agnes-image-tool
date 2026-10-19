@@ -9,6 +9,7 @@ import {
   isValidImageSize,
   isValidImageRatio,
   IMAGE_BODY_LIMIT,
+  AGNES_MAX_IMAGES,
 } from "@/lib/api-guard";
 
 const MAX_PROMPT_LEN = 4000;
@@ -39,7 +40,9 @@ export async function POST(request: NextRequest) {
       size,
       ratio,
       extra_body: {
-        image: Array.isArray(image) ? image : [image],
+        // API hard limit: 4 images per request — cap before submitting
+        // (exceeding returns 400 "Image count N exceeds limit 4 per request")
+        image: (Array.isArray(image) ? image : [image]).slice(0, AGNES_MAX_IMAGES),
         response_format: "url",
       } as Record<string, unknown>,
     };

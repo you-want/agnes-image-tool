@@ -6,7 +6,7 @@ import https from "node:https";
 import http, { type IncomingMessage } from "node:http";
 import { HttpsProxyAgent } from "https-proxy-agent";
 import { loadServerConfig } from "@/lib/config";
-import { checkRateLimit, readJsonLimited, IMAGE_BODY_LIMIT } from "@/lib/api-guard";
+import { checkRateLimit, readJsonLimited, IMAGE_BODY_LIMIT, AGNES_MAX_IMAGES, AGNES_MAX_AUDIOS } from "@/lib/api-guard";
 
 const MAX_PROMPT_LEN = 4000;
 const IMAGE_URL_TIMEOUT_MS = 10_000;
@@ -184,11 +184,17 @@ export async function POST(request: NextRequest) {
       if (imgList.length === 0 && audList.length === 0) {
         return Response.json({ error: "reference mode: at least one of images or audios is required" }, { status: 400 });
       }
-      if (imgList.length > 5) {
-        return Response.json({ error: "images length must not exceed 5" }, { status: 400 });
+      if (imgList.length > AGNES_MAX_IMAGES) {
+        return Response.json(
+          { error: `images length must not exceed ${AGNES_MAX_IMAGES} (API limit)` },
+          { status: 400 }
+        );
       }
-      if (audList.length > 3) {
-        return Response.json({ error: "audios length must not exceed 3" }, { status: 400 });
+      if (audList.length > AGNES_MAX_AUDIOS) {
+        return Response.json(
+          { error: `audios length must not exceed ${AGNES_MAX_AUDIOS} (API limit)` },
+          { status: 400 }
+        );
       }
     }
 
@@ -262,8 +268,12 @@ export async function POST(request: NextRequest) {
       if (first_frame) payload.first_frame = first_frame;
       if (last_frame) payload.last_frame = last_frame;
     } else if (mode === "reference") {
-      if (Array.isArray(images) && images.length > 0) payload.images = images;
-      if (Array.isArray(audios) && audios.length > 0) payload.audios = audios;
+      // API hard limit: 4 images per request — cap before submitting
+      // (exceeding returns 400 "Image count N exceeds limit 4 per request")
+      const imgArray = Array.isArray(images) ? images : [];
+      const audArray = Array.isArray(audios) ? audios : [];
+      if (imgArray.length > 0) payload.images = imgArray.slice(0, AGNES_MAX_IMAGES);
+      if (audArray.length > 0) payload.audios = audArray.slice(0, AGNES_MAX_AUDIOS);
     }
 
     const quotaError = await takeQuota(access.userId, "video");

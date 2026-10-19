@@ -9,6 +9,7 @@ import {
   isValidImageSize,
   isValidImageRatio,
   TEXT_BODY_LIMIT,
+  AGNES_MAX_IMAGES,
 } from "@/lib/api-guard";
 
 const MAX_PROMPT_LEN = 4000;
@@ -39,7 +40,19 @@ export async function POST(request: NextRequest) {
       ratio,
     };
 
-    if (extra_body) payload.extra_body = extra_body;
+    if (extra_body) {
+      // Cap extra_body.image to the API limit of 4 (exceeding returns
+      // 400 "Image count N exceeds limit 4 per request")
+      const imageArr = (extra_body as Record<string, unknown>).image;
+      if (Array.isArray(imageArr)) {
+        payload.extra_body = {
+          ...(extra_body as Record<string, unknown>),
+          image: imageArr.slice(0, AGNES_MAX_IMAGES),
+        };
+      } else {
+        payload.extra_body = extra_body;
+      }
+    }
 
     const quotaError = await takeQuota(access.userId, "image");
     if (quotaError) return quotaError;

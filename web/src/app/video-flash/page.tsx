@@ -165,10 +165,13 @@ export default function VideoFlashPage() {
 
     try {
       // Combine URL inputs with uploaded files
+      // Cap at the API hard limit of 4 images per request (exceeding
+      // returns 400 "Image count N exceeds limit 4 per request")
+      const MAX_IMAGES = 4;
       const imagesList = [
         ...params.imageUrls.split("\n").map((u) => u.trim()).filter(Boolean),
         ...params.uploadedImages.map((f) => f.url),
-      ];
+      ].slice(0, MAX_IMAGES);
       const audiosList = [
         ...params.audioUrls.split("\n").map((u) => u.trim()).filter(Boolean),
         ...params.uploadedAudios.map((f) => f.url),
@@ -357,7 +360,7 @@ export default function VideoFlashPage() {
                         variant="secondary"
                         size="sm"
                         onClick={() => imageInputRef.current?.click()}
-                        disabled={uploading || params.uploadedImages.length >= 5}
+                        disabled={uploading || params.uploadedImages.length >= 4}
                         className="flex-1"
                       >
                         <ImageIcon size={14} />

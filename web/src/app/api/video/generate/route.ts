@@ -11,11 +11,11 @@ import {
   isValidFrameRate,
   clampInt,
   IMAGE_BODY_LIMIT,
+  AGNES_MAX_IMAGES,
 } from "@/lib/api-guard";
 import https from "node:https";
 
 const MAX_PROMPT_LEN = 4000;
-const MAX_IMAGES_PER_REQUEST = 4; // Agnes Video API limit: "Image count N exceeds limit 4 per request"
 const IMAGE_URL_TIMEOUT_MS = 10_000;
 
 /**
@@ -108,8 +108,12 @@ export async function POST(request: NextRequest) {
       ? ((extra_body as Record<string, unknown>).image as unknown[]).filter((u) => typeof u === "string")
       : [];
     if (typeof image === "string" && image.trim()) extraImages.push(image);
-    if (extraImages.length > MAX_IMAGES_PER_REQUEST) {
-      return errorResponse(`Image count ${extraImages.length} exceeds limit ${MAX_IMAGES_PER_REQUEST} per request`, 400);
+    // Agnes hard limit: 4 images per request (exceeding returns 400
+    // "Image count N exceeds limit 4 per request") — cap before submitting
+    if (extraImages.length > AGNES_MAX_IMAGES) {
+      console.log(
+        `[Video API] ${extraImages.length} images provided, capping to ${AGNES_MAX_IMAGES} (API limit)`
+      );
     }
 
     // Validate external image URLs before forwarding to upstream API
@@ -155,7 +159,13 @@ export async function POST(request: NextRequest) {
     if (typeof negative_prompt === "string" && negative_prompt.length <= MAX_PROMPT_LEN) {
       payload.negative_prompt = negative_prompt;
     }
-    if (extra_body) payload.extra_body = extra_body;
+    // Apply the cap: slice extra_body.image (and top-level image) to AGNES_MAX_IMAGES
+    if (extra_body && Array.isArray((extra_body as Record<string, unknown>).image)) {
+      const capped = ((extra_body as Record<string, unknown>).image as unknown[])
+        .filter((u) => typeof u === "string")
+        .slice(0, AGNES_MAX_IMAGES);
+      payload.extra_body = { ...(extra_body as Record<string, unknown>), image: capped };
+    }
 
     const quotaError = await takeQuota(access.userId, "video");
     if (quotaError) return quotaError;

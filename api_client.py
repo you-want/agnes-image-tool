@@ -25,6 +25,11 @@ from config import (
 class AgnesImageGenerator:
     """Agnes AI 图像/视频生成器"""
 
+    # API 限制：单请求 images 数组最多 4 张（超过返回 400
+    # "Image count N exceeds limit 4 per request"），提交前必须截断/拒绝，
+    # 绝不能把超限数组发出去。
+    MAX_IMAGES_PER_REQUEST = 4
+
     def __init__(self, api_key: str, base_url: str):
         self.api_key = api_key
         self.base_url = base_url.rstrip('/')
@@ -345,7 +350,10 @@ class AgnesImageGenerator:
         num_frames: Optional[int] = None,
     ) -> str:
         """多图视频 / 关键帧动画"""
+        # API 限制：单次请求最多 4 张参考图，提交前强制截断，
+        # 避免 "Image count N exceeds limit 4 per request" 400 报错
         payload = {"model": VIDEO_MODEL, "prompt": prompt}
+        image_urls = image_urls[: self.MAX_IMAGES_PER_REQUEST]
 
         # 多图 / 关键帧使用 extra_body
         extra_body = {"image": image_urls}

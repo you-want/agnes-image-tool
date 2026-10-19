@@ -367,10 +367,10 @@ def create_ui():
                         
                         gr.HTML("<div class='section-label'>图片输入</div>")
                         mi_image_urls = gr.Textbox(
-                            label="图片 URL 列表（每行一个）",
+                            label="图片 URL 列表（每行一个，最多 4 张）",
                             placeholder="https://example.com/image1.png\nhttps://example.com/image2.png",
                             lines=4,
-                            info="输入公网可访问的图片URL，不支持本地图片"
+                            info="输入公网可访问的图片URL，不支持本地图片；单请求最多 4 张，超出自动截断"
                         )
                         mi_mode = gr.Dropdown(
                             label="生成模式",
@@ -751,6 +751,11 @@ def create_ui():
                 image_urls = [url.strip() for url in image_urls_text.split("\n") if url.strip()]
                 if not image_urls:
                     return None, "❌ 请输入至少一个图片 URL"
+                # API 限制：单请求最多 4 张，超出自动截断（避免 400 "exceeds limit 4"）
+                truncated_note = ""
+                if len(image_urls) > 4:
+                    truncated_note = f"（超出 4 张上限，已自动截断为前 4 张）"
+                    image_urls = image_urls[:4]
                 
                 # 处理可选参数
                 seed_val = int(seed) if seed and seed > 0 else None
@@ -785,7 +790,7 @@ def create_ui():
                     "image_count": len(image_urls)
                 })
 
-                return local_path, f"✅ 视频生成成功！模式: {mode}, 时长: {duration}秒, 比例: {ratio}"
+                return local_path, f"✅ 视频生成成功！模式: {mode}, 时长: {duration}秒, 比例: {ratio} {truncated_note}"
 
             except Exception as e:
                 return None, f"❌ 错误: {str(e)}"
