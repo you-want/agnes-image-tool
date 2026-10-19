@@ -66,12 +66,18 @@ export async function POST(request: NextRequest) {
       httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: "lax", path: "/", maxAge,
     });
     return response;
-  } catch {
+  } catch (err) {
+    console.error(
+      "[auth/wechat/code/verify] login failed:",
+      err instanceof Error ? `${err.name}: ${err.message}` : err
+    );
     if (claimedId) {
       try {
         await authDatabase().from("wechat_login_codes").update({ status: "failed", failure_code: "LOGIN_FAILED", updated_at: new Date().toISOString() })
           .eq("id", claimedId).eq("status", "consuming");
-      } catch { /* Keep authentication closed even when cleanup is unavailable. */ }
+      } catch (cleanupErr) {
+        console.error("[auth/wechat/code/verify] cleanup also failed:", cleanupErr instanceof Error ? cleanupErr.message : cleanupErr);
+      }
     }
     return failure("登录服务暂时不可用，请稍后到公众号重新获取验证码。", "LOGIN_UNAVAILABLE", 503);
   }
