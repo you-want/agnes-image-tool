@@ -1,34 +1,72 @@
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.egg-info/
-dist/
-build/
-*.egg
+# ===== 用户个人原素材（不上传） =====
+# 原图 / 原音频 / 原视频
+*.mp3
+*.mp4
+*.wav
+*.JPG
+*.jpg
+*.png
+*.jpeg
 
-# Virtual env
+# 排除不需要忽略的资产（项目内置示例图）
+!assets/i2i_example1.png
+!assets/i2i_example2.png
+!assets/i2i_example3.png
+!assets/i2i_example4.png
+!assets/i2i_example5.png
+!assets/i2i_example6.png
+!assets/t2i_example1.png
+!assets/t2i_example2.png
+!assets/t2i_example3.png
+!web/public/wechat-official-account-qr.png
+
+# ===== 临时文件 =====
+/2
+/3
+*.log
+logs/
+tmp/
+temp/
+.tmp/
+*.tmp
+
+# ===== 项目输出目录 =====
+outputs/
+mv_*/
+manju/
+scripts/fly_v2/
+airport_english/
+history.json
+web/1.png
+web/2.png
+web/3.png
+1.mp4
+1_person_transparent.png
+dy-ai.JPG
+
+# ===== 本地 MV 制作脚本与分镜（不属于应用） =====
+/scripts/generate_tuoduo_segments.js
+/scripts/generate_tuoduo_segments.py
+/scripts/regenerate_seg01.js
+/scripts/retry_tuoduo.js
+/docs/short_video_01_seatbelt.md
+/docs/short_video_02_helmet.md
+pavo_canvas/
+
+# ===== 依赖和环境 =====
+node_modules/
 .venv/
 venv/
-env/
+__pycache__/
+*.pyc
+*.pyo
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
-*~
-
-# App generated files
-outputs/
-history.json
+# ===== 配置文件（含 API key） =====
+web/.env.local
+.web/.env.local
 .config.json
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Env
+# ===== Env =====
 .env
 .env.*
 !.env.example
@@ -38,41 +76,25 @@ Thumbs.db
 !.env.template
 !.env.*.template
 
-# JavaScript dependencies and generated output (at any depth)
-node_modules/
+# ===== JavaScript 构建产物与工具缓存 =====
 .next/
 out/
 .vercel/
 *.tsbuildinfo
-
-# Test and tool caches
 coverage/
 .cache/
 .pytest_cache/
 .vite/
-.claude/settings.local.json
-.claude/*.lock
 supabase/.temp/
 supabase/.branches/
 
-# Logs
-*.log
-logs/
-
-# Temp files
-tmp/
-temp/
-.tmp/
-*.tmp
-
-# MV working directories
-/mv_*/
-/manju/
-
-# Local video-production scripts and storyboards (not part of the app)
-/scripts/generate_tuoduo_segments.js
-/scripts/generate_tuoduo_segments.py
-/scripts/regenerate_seg01.js
-/scripts/retry_tuoduo.js
-/docs/short_video_01_seatbelt.md
-/docs/short_video_02_helmet.md
+# ===== OS / IDE =====
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.claude/settings.local.json
+.claude/*.lock

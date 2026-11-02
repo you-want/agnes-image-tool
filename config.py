@@ -14,7 +14,7 @@ HISTORY_FILE = BASE_DIR / "history.json"
 OUTPUT_DIR.mkdir(exist_ok=True)
 
 # ==================== API 配置 ====================
-DEFAULT_BASE_URL = "https://apihub.agnes-ai.com/v1"
+DEFAULT_BASE_URL = "https://api.agnes-ai.cn/v1"
 
 _cached = {}
 if CONFIG_FILE.exists():

@@ -454,7 +454,7 @@ class AgnesImageGenerator:
 
             while waited < max_wait:
                 try:
-                    # 查询视频结果的URL是 https://apihub.agnes-ai.com/agnesapi
+                    # 查询视频结果的URL是 https://api.agnes-ai.cn/agnesapi
                     # 需要去掉 /v1 前缀
                     base_domain = self.base_url.replace("/v1", "")
                     poll_url = f"{base_domain}/agnesapi?video_id={video_id}"

@@ -6,7 +6,7 @@ from openai import OpenAI
 
 # 测试配置
 API_KEY = os.getenv("AGNES_API_KEY", "")
-BASE_URL = "https://apihub.agnes-ai.com/v1"
+BASE_URL = "https://api.agnes-ai.cn/v1"
 
 if not API_KEY:
     print("❌ 请先设置环境变量 AGNES_API_KEY")

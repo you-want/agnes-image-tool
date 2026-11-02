@@ -68,7 +68,7 @@ def test_api_urls():
     """测试API URL构建"""
     print("\n=== 测试API URL构建 ===\n")
     
-    base_url = "https://apihub.agnes-ai.com/v1"
+    base_url = "https://api.agnes-ai.cn/v1"
     
     # 创建视频任务URL
     create_url = f"{base_url}/videos"
@@ -81,8 +81,8 @@ def test_api_urls():
     print(f"查询视频结果: GET {query_url}")
     
     # 验证URL是否符合文档
-    assert create_url == "https://apihub.agnes-ai.com/v1/videos", "创建URL不正确"
-    assert query_url == "https://apihub.agnes-ai.com/agnesapi?video_id=video_xxxxxx", "查询URL不正确"
+    assert create_url == "https://api.agnes-ai.cn/v1/videos", "创建URL不正确"
+    assert query_url == "https://api.agnes-ai.cn/agnesapi?video_id=video_xxxxxx", "查询URL不正确"
     
     print("\n✅ API URL构建正确！")
 
