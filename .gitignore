@@ -9,8 +9,6 @@
 *.jpeg
 
 # 排除不需要忽略的资产（项目内置示例图）
-!assets/i2i_example1.png
-!assets/i2i_example2.png
 !assets/i2i_example3.png
 !assets/i2i_example4.png
 !assets/i2i_example5.png
@@ -45,10 +43,7 @@ web/3.png
 dy-ai.JPG
 
 # ===== 本地 MV 制作脚本与分镜（不属于应用） =====
-/scripts/generate_tuoduo_segments.js
-/scripts/generate_tuoduo_segments.py
-/scripts/regenerate_seg01.js
-/scripts/retry_tuoduo.js
+scripts/gen_*.py
 /docs/short_video_01_seatbelt.md
 /docs/short_video_02_helmet.md
 pavo_canvas/
